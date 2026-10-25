@@ -6,7 +6,6 @@ CE_BACKUP="${XDG_DATA_HOME:-$HOME/.local/share}/mb-status-ce/backup"
 CE_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}"
 CE_TRASH="${XDG_DATA_HOME:-$HOME/.local/share}/Trash"
 CE_APPUPD="$CE_CACHE/mb-status-ce/app-updates"
-CE_ORPHSEEN="$CE_CACHE/mb-status-ce/orphans-notified"
 
 bold=$'\e[1m'; red=$'\e[31m'; dim=$'\e[2m'; rst=$'\e[0m'
 
@@ -73,8 +72,6 @@ _A_OLD_REVISION=$'stara rewizja'
 _A_LEFTOVER=$'Pozostałe konfiguracje (.pacnew / .pacsave)'
 _A_MERGE_INFO=$'Otwiera każdy plik w meld obok oryginału. Scal go,\nzachowaj nowy lub pomiń. Nic nie zmieni się bez twojego wyboru.'
 _A_CHECKING=$'Sprawdzanie aktualizacji flatpak/snap...'
-_A_BTN_REVIEW=$'Przejrzyj'
-_A_BTN_BACKUP=$'Kopia i usuń'
 ;;
 *)
 _A_NOT_INSTALLED=$'is not installed.'
@@ -138,8 +135,6 @@ _A_OLD_REVISION=$'old revision'
 _A_LEFTOVER=$'Leftover configs (.pacnew / .pacsave)'
 _A_MERGE_INFO=$'Opens each file in meld next to the original. Merge it,\nkeep the new one or skip it. Nothing is changed without your choice.'
 _A_CHECKING=$'Checking flatpak/snap updates...'
-_A_BTN_REVIEW=$'Review'
-_A_BTN_BACKUP=$'Back up and remove'
 ;;
 esac
 
@@ -571,25 +566,6 @@ app_counted() { # flatpak | snap
     echo "$c"
 }
 
-# desktop notice with buttons when the orphan list changed; the buttons open the terminal flows
-act_orphancheck() {
-    [[ $(conf_get notify_orphans n) == y ]] && hash notify-send.sh 2>/dev/null || return 0
-    local list n sig body ob
-    mapfile -t list < <(orphans)
-    n=${#list[@]}
-    mkdir -p "${CE_ORPHSEEN%/*}"
-    if ((n == 0)); then echo none > "$CE_ORPHSEEN"; return 0; fi
-    sig=$(printf '%s\n' "${list[@]}" | sort | md5sum | cut -d' ' -f1)
-    [[ $(cat "$CE_ORPHSEEN" 2>/dev/null) == "$sig" ]] && return 0
-    body="${list[*]:0:5}"
-    ((n > 5)) && body+=" $_A_AND $((n - 5)) $_A_MORE"
-    ob=$(orphan_bytes "${list[@]}")
-    notify-send.sh -a mb-status-ce -i user-trash-full -t 120000 -f "$_A_ORPHANS: $n${ob:+ ($(human "$ob"))}" "$body" \
-        -o "$_A_BTN_REVIEW:terminator -T Orphans -x $SELF run orphans review" \
-        -o "$_A_BTN_BACKUP:terminator -T Orphans -x $SELF run orphans backup" || return 0
-    echo "$sig" > "$CE_ORPHSEEN"
-}
-
 # installed, and for snap snapd must be up (the binary ships without it)
 app_usable() { # flatpak | snap
     hash "$1" 2>/dev/null || return 1
@@ -636,7 +612,6 @@ run_action() { # action [mode]
         leftover) act_leftover "$m" ;;
         sysupdate) act_sysupdate "$m" ;;
         appcheck) act_appcheck ;;
-        orphancheck) act_orphancheck ;;
         *) echo "unknown action: $a"; exit 2 ;;
     esac
 }

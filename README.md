@@ -41,9 +41,8 @@ Every cleanup action opens a terminal, shows the command and a preview, and asks
 - `thumb_days`: same for `~/.cache/thumbnails`.
 - `cache_ignore`: names in `~/.cache` that are never touched.
 - `update_flatpak`, `update_snap`: the checkboxes (`y` or `n`).
-- `notify_orphans`: `y` shows a desktop notice when the orphan count changes, with *Review* and *Back up and remove* buttons (checkbox in the Orphan packages submenu, needs `notify-send.sh`).
 
-The pending flatpak and snap counts and the orphan notice come from a user timer (`mb-status-ce-appcheck.timer`, every 3 hours). Run the checks now with `mb-status-ce run appcheck` and `mb-status-ce run orphancheck`.
+The pending flatpak and snap counts come from a user timer (`mb-status-ce-appcheck.timer`, every 3 hours). Run the check now with `mb-status-ce run appcheck`.
 
 ## Install
 
