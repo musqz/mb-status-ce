@@ -150,7 +150,6 @@ _REMOVE_KEEP_CONFIGS="Usuń (zachowaj konfiguracje)"
 _REMOVE_WITH_DEPS="Usuń z nieużywanymi zależnościami"
 _BACKUP_THEN_REMOVE="Kopia konfiguracji, potem usuń"
 _REMOVE_DEPS_CONFIGS="Usuń z zależnościami i konfiguracją"
-_NOTIFY_ORPHANS="Powiadamiaj o osieroconych"
 _AUR_CACHE="Cache pomocnika AUR"
 _AUR_INFO="Pobrane źródła i pliki budowania."
 _THUMBS_CACHE="Miniatury / .cache"
@@ -246,7 +245,6 @@ _REMOVE_KEEP_CONFIGS="Remove (keep configs)"
 _REMOVE_WITH_DEPS="Remove with unused deps"
 _BACKUP_THEN_REMOVE="Back up configs then remove"
 _REMOVE_DEPS_CONFIGS="Remove with deps and configs"
-_NOTIFY_ORPHANS="Notify about orphans"
 _AUR_CACHE="AUR helper cache"
 _AUR_INFO="Downloaded sources and build files."
 _THUMBS_CACHE="Thumbnails / .cache"
@@ -617,13 +615,6 @@ out2+=("^sep($_DU_ALERT_LEVEL)")
 [[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;$SELF menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;$SELF menu settings")
 out2+=("^sep($_DIR_SIZE_MONITOR)")
 [[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;$SELF menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;$SELF menu settings")
-if hash notify-send.sh 2>/dev/null; then
-if [[ $(conf_get notify_orphans n) == y ]]; then
-out2+=("<big>${cbon}</big>   $_NOTIFY_ORPHANS,mb-setvar notify_orphans=n $CE_CONF;$SELF menu settings")
-else
-out2+=("<big>${cboff}</big>   $_NOTIFY_ORPHANS,mb-setvar notify_orphans=y $CE_CONF;$SELF run orphancheck;$SELF menu settings")
-fi
-fi
 out2+=("^sep($_ICON_COLORS)")
 icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
 out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
