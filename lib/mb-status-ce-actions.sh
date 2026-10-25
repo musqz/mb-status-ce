@@ -73,6 +73,10 @@ _A_OLD_REVISION=$'stara rewizja'
 _A_LEFTOVER=$'Pozostałe konfiguracje (.pacnew / .pacsave)'
 _A_MERGE_INFO=$'Otwiera każdy plik w meld obok oryginału. Scal go,\nzachowaj nowy lub pomiń. Nic nie zmieni się bez twojego wyboru.'
 _A_CHECKING=$'Sprawdzanie aktualizacji flatpak/snap...'
+_A_VM=$'Maszyna wirtualna:'
+_A_VM_INFO=$'Trwale usuwa dysk maszyny, jej ustawienia i migawki.'
+_A_VM_RUNNING=$'jest uruchomiona. Najpierw ją wyłącz.'
+_A_VM_UNKNOWN=$'Nie znaleziono maszyny:'
 ;;
 *)
 _A_NOT_INSTALLED=$'is not installed.'
@@ -136,6 +140,10 @@ _A_OLD_REVISION=$'old revision'
 _A_LEFTOVER=$'Leftover configs (.pacnew / .pacsave)'
 _A_MERGE_INFO=$'Opens each file in meld next to the original. Merge it,\nkeep the new one or skip it. Nothing is changed without your choice.'
 _A_CHECKING=$'Checking flatpak/snap updates...'
+_A_VM=$'Virtual machine:'
+_A_VM_INFO=$'Permanently deletes the VM disk, its settings and snapshots.'
+_A_VM_RUNNING=$'is running. Shut it down first.'
+_A_VM_UNKNOWN=$'VM not found:'
 ;;
 esac
 
@@ -150,6 +158,8 @@ cache_days=30
 thumb_days=14
 # top-level names in ~/.cache that are never touched (space separated)
 cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status-ce fontconfig
+# folder with quickemu VMs (<name>.conf next to a <name>/ folder)
+vm_dir=~/emu
 EOF
 }
 
@@ -514,6 +524,38 @@ docker_prunable() {
        -n $(timeout 3 docker images -qf dangling=true 2>/dev/null) ]]
 }
 
+vm_dir() {
+    local d
+    d=$(conf_get vm_dir "$HOME/emu")
+    d=${d/#\~/$HOME}
+    echo "${d/#\$HOME/$HOME}"
+}
+
+# quickemu VMs: <name>.conf next to a <name>/ folder; names that are unsafe in a command line are skipped
+vm_names() {
+    local d c n
+    d=${VMD:-$(vm_dir)}
+    for c in "$d"/*.conf; do
+        [[ -f $c ]] || continue
+        n=${c##*/}; n=${n%.conf}
+        [[ $n =~ ^[A-Za-z0-9][A-Za-z0-9._@+-]*$ && -d $d/$n && ! -L $d/$n ]] && echo "$n"
+    done
+}
+
+vm_size() { local d=${VMD:-$(vm_dir)}; bytes_of "$d/$1" "$d/$1.conf"; }
+
+vm_date() { # last change of the disk, else of the folder
+    local d=${VMD:-$(vm_dir)} f; f="$d/$1/disk.qcow2"
+    [[ -f $f ]] || f="$d/$1"
+    date -r "$f" +%F
+}
+
+vm_running() { # quickemu keeps the qemu pid in <name>/<name>.pid
+    local pid
+    pid=$(cat "${VMD:-$(vm_dir)}/$1/$1.pid" 2>/dev/null) || return 1
+    [[ $pid =~ ^[0-9]+$ && $(cat "/proc/$pid/comm" 2>/dev/null) == qemu* ]]
+}
+
 dev_has() { # tool
     case $1 in
         go) hash go 2>/dev/null && { ((!DYNAMIC)) || has_files "$(go env GOCACHE)"; } ;;
@@ -574,6 +616,22 @@ act_leftover() {
             flow ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
+}
+
+act_vm() {
+    local d n=${1:-} v known=() ok=0
+    d=$(vm_dir); VMD=$d
+    mapfile -t known < <(vm_names)
+    for v in "${known[@]}"; do [[ $v == "$n" ]] && ok=1; done
+    ((ok)) || { echo "$_A_VM_UNKNOWN $n"; pause; return 0; }
+    if vm_running "$n"; then echo "${red}$n $_A_VM_RUNNING${rst}"; pause; return 0; fi
+    TITLE="$_A_VM $n"
+    INFO="$_A_VM_INFO"
+    DANGER=1
+    CMD=(rm -rf -- "$d/$n" "$d/$n.conf")
+    DRY=(ls -la -- "$d/$n")
+    MEASURE=("$d/$n" "$d/$n.conf")
+    flow
 }
 
 appupd_get() { local v; v=$(sed -n "s/^$1=//p" "$CE_APPUPD" 2>/dev/null | tail -n1 || true); echo "${v:-0}"; } # flatpak | snap
@@ -647,6 +705,7 @@ run_action() { # action [mode]
         dev) act_dev "$m" ;;
         containers) act_containers "$m" ;;
         leftover) act_leftover "$m" ;;
+        vm) act_vm "$m" ;;
         sysupdate) act_sysupdate "$m" ;;
         appcheck) act_appcheck ;;
         *) echo "unknown action: $a"; exit 2 ;;

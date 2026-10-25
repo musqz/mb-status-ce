@@ -133,6 +133,8 @@ _ICON_OK="OK ikona i kolor"
 _ICON="Ikona"
 _COLOR="Kolor"
 _ICON_COLORS="Kolory i Ikona"
+_VMS="Maszyny wirtualne"
+_VM_INFO="Usuwa folder maszyny i jej plik .conf."
 _DYNAMIC_MENU="Menu dynamiczne (ukryj puste wiersze)"
 _NONE_FOUND="Brak."
 _UPDATE_APP="Aktualizuj"
@@ -229,6 +231,8 @@ _ICON_OK="OK icon and color"
 _ICON="Icon"
 _COLOR="Color"
 _ICON_COLORS="Colors and Icon"
+_VMS="Virtual machines"
+_VM_INFO="Deletes the VM folder and its .conf."
 _DYNAMIC_MENU="Dynamic menu (hide empty rows)"
 _NONE_FOUND="None found."
 _UPDATE_APP="Update"
@@ -300,6 +304,7 @@ esac
             dev) g=$'\U000F0174' ;;
             containers) g=$'\U000F0868' ;;
             leftover) g=$'\U000F086F' ;;
+            vm) g=$'\U000F0379' ;;
         esac
         out+=("\"\"\"<big>$g</big>   $1 	$2\"\"\",^checkout($3)")
     }
@@ -464,7 +469,7 @@ fi
         done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
     fi
 
-    local jb pb aurb cb sb tb thb nor leftn ob hdr t
+    local jb pb aurb cb sb tb thb nor leftn ob hdr t v vmb
     ## DIR SIZE MONITOR: a row shows only when there is something to clean; hidden entirely when off
     if [[ "${dir_size_monitor}" == "y" ]]; then
         jb=$(journal_bytes)
@@ -597,6 +602,27 @@ fi
                     snap) opt "snap" "$_REMOVE_OLD_REVS" containers snap ;;
                 esac
             done
+        fi
+
+        local vmd vmn=() vml=() vmtot=0
+        VMD=$(vm_dir); vmd=$VMD
+        mapfile -t vmn < <(vm_names)
+        if ((${#vmn[@]})) || { ((!DYNAMIC)) && [[ -d $vmd ]]; }; then
+            for v in "${vmn[@]}"; do
+                vmb=$(vm_size "$v")
+                vmtot=$((vmtot + vmb))
+                vml+=("$vmb $v")
+            done
+            item "$_VMS" "$(size_span "$vmtot")" vm
+            sub vm "$_VMS"
+            info "$_VM_INFO"
+            if ((${#vml[@]})); then
+                while read -r vmb v; do
+                    opt "$v" "$(human "$vmb")  $(vm_date "$v")" vm "$v"
+                done < <(printf '%s\n' "${vml[@]}" | sort -rn)
+            else
+                info "$_NONE_FOUND"
+            fi
         fi
 
         if hash pacdiff 2>/dev/null; then
