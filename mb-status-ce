@@ -604,7 +604,7 @@ fi
             done
         fi
 
-        local vmn=() vml=() vmtot=0
+        local vmn=() vml=() vmtot=0 i grp=() dh
         vm_load
         mapfile -t vmn < <(vm_ids)
         if ((${#vmn[@]})) || { ((!DYNAMIC)) && vm_dirs_exist; }; then
@@ -617,9 +617,22 @@ fi
             sub vm "$_VMS"
             info "$_VM_INFO"
             if ((${#vml[@]})); then
-                while read -r vmb v; do
-                    opt "$(vm_label "$v")" "$(human "$vmb")  $(vm_date "$v")" vm "$v"
-                done < <(printf '%s\n' "${vml[@]}" | sort -rn)
+                # one block per folder in config order, biggest VM first
+                for i in "${!VMDIRS[@]}"; do
+                    mapfile -t grp < <(printf '%s\n' "${vml[@]}" | awk -v p="$i:" 'index($2, p) == 1' | sort -rn)
+                    ((${#grp[@]})) || continue
+                    if ((${#VMDIRS[@]} > 1)); then
+                        vmb=0
+                        for v in "${grp[@]}"; do ((vmb += ${v%% *})); done
+                        dh=${VMDIRS[i]/#$HOME/\~}
+                        dh=${dh//&/"&amp;"}; dh=${dh//</"&lt;"}; dh=${dh//>/"&gt;"}; dh=${dh//)/"&#41;"}
+                        out2+=("^sep(<small>$dh</small>  $(human "$vmb"))")
+                    fi
+                    for v in "${grp[@]}"; do
+                        vmb=${v%% *}; v=${v#* }
+                        opt "${v#*:}" "$(human "$vmb")  $(vm_date "$v")" vm "$v"
+                    done
+                done
             else
                 info "$_NONE_FOUND"
             fi
