@@ -87,6 +87,12 @@ Use the same `PREFIX` and `SUDO` as for the install. Your config `~/.config/mabo
 
 If an earlier version installed the timer, remove it: `systemctl --user disable --now mb-status-ce-appcheck.timer`, then delete the two `mb-status-ce-appcheck.*` unit files.
 
+## Mabox build
+
+`packaging/mabox-dropin.sh` writes `dist/mabox/`: the script as `mb-status`, its helper under `usr/share/mb-status/` and `mb-status.diff` against the installed `mb-status`.
+
+Apply the diff to a stock `mabox-tools` install: `cd / && sudo patch -p1 < dist/mabox/mb-status.diff`. It uses `~/.config/mabox/mb-status.conf` for the cleanup settings.
+
 ## Usage
 
 Replace the `mb-status` commands in your tint2 panel (`~/.config/tint2/*.tint2rc`):
