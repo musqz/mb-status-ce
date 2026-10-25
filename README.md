@@ -33,6 +33,10 @@ Entries for tools that are not installed are hidden:
 
 Every cleanup action opens a terminal, shows the command and a preview, and asks before it runs. Root commands use `sudo`.
 
+Orphan packages, *Back up configs then remove*:
+
+![mb-status-ce orphans backup](docs/orphans-backup.png)
+
 ## Configuration
 
 `~/.config/mabox/mb-status-ce.conf` is created on first run. Open it with *Settings → Edit cleanup config*.
