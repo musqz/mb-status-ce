@@ -45,6 +45,7 @@ Orphan packages, *Back up configs then remove*:
 - `thumb_days`: same for `~/.cache/thumbnails`.
 - `cache_ignore`: names in `~/.cache` that are never touched.
 - `update_flatpak`, `update_snap`: the checkboxes (`y` or `n`).
+- `dynamic_menu`: `y` hides cleanup rows with nothing to clean, `n` shows every row of the tools you have installed (checkbox in Settings).
 
 The pending flatpak and snap counts come from a user timer (`mb-status-ce-appcheck.timer`, every 3 hours). Run the check now with `mb-status-ce run appcheck`.
 

@@ -44,6 +44,7 @@ fi
 disk_limit=${disk_limit:-70}
 big_pkgs=${big_pkgs:-20}
 dir_size_monitor=${dir_size_monitor:-y}
+DYNAMIC=0; [[ ${dynamic_menu:-y} == y ]] && DYNAMIC=1
 OK_ICON=${ok_icon:-"󰕥"}
 OK_FGCOLOR=${ok_fgcolor:-"#008000"}
 WARN_FGCOLOR=${warn_fgcolor:-"#FFFFFF"}
@@ -132,6 +133,8 @@ _ICON_OK="OK ikona i kolor"
 _ICON="Ikona"
 _COLOR="Kolor"
 _ICON_COLORS="Kolory i Ikona"
+_DYNAMIC_MENU="Menu dynamiczne (ukryj puste wiersze)"
+_NONE_FOUND="Brak."
 _UPDATE_APP="Aktualizuj"
 _JOURNAL_LOGS="Logi journala"
 _VACUUM_INFO1="Usuwa logi ponad limit."
@@ -226,6 +229,8 @@ _ICON_OK="OK icon and color"
 _ICON="Icon"
 _COLOR="Color"
 _ICON_COLORS="Colors and Icon"
+_DYNAMIC_MENU="Dynamic menu (hide empty rows)"
+_NONE_FOUND="None found."
 _UPDATE_APP="Update"
 _JOURNAL_LOGS="Journal logs"
 _VACUUM_INFO1="Deletes logs beyond the limit."
@@ -474,7 +479,7 @@ fi
 
         hdr=${#out[@]}
         out+=("^sep($_DIR_SIZE_MONITOR)")
-        if ((jb > 0)); then
+        if ((!DYNAMIC || jb > 0)); then
             item "$_LOGS" "$(size_span "$jb")" journal
             sub journal "$_JOURNAL_LOGS"
             info "$_VACUUM_INFO1" "$_VACUUM_INFO2"
@@ -484,7 +489,7 @@ fi
             opt "$_VACUUM_500M" "journalctl --vacuum-size=500M" journal 500M
         fi
 
-        if has_files /var/cache/pacman/pkg; then
+        if ((!DYNAMIC)) || has_files /var/cache/pacman/pkg; then
             item "$_PACMAN_CACHE" "$(size_span "$pb")" paccache
             sub paccache "$_PACMAN_CACHE"
             info "$_PACCACHE_INFO1" "$_PACCACHE_INFO2"
@@ -494,19 +499,27 @@ fi
             bad "$_REMOVE_EVERYTHING" "pacman -Scc" paccache all
         fi
 
-        if ((nor > 0)); then
-            ob=$(orphan_bytes "${PK[@]}")
-            [[ -n $ob ]] && ob=$(human "$ob") || ob="$nor $_PKGS"
-            item "$_ORPHANS" "<span> $ob </span>" orphans
-            sub orphans "$_ORPHANS"
-            local more=""
-            ((nor > 3)) && more=" ..."
-            info "$(cut -c1-35 <<<"$nor $_PKGS: ${PK[*]:0:3}$more")" "$_SIZE_INCL_DEPS"
-            opt "$_REVIEW_LIST" "pacman -Qi" orphans review
-            opt "$_REMOVE_KEEP_CONFIGS" "pacman -R" orphans R
-            opt "$_REMOVE_WITH_DEPS" "pacman -Rs" orphans Rs
-            opt "$_BACKUP_THEN_REMOVE" "pacman -Rns" orphans backup
-            bad "$_REMOVE_DEPS_CONFIGS" "pacman -Rns" orphans Rns
+        if ((!DYNAMIC || nor > 0)); then
+            if ((nor == 0)); then
+                item "$_ORPHANS" "<span fgcolor='${OK_FGCOLOR}'>   </span>" orphans
+                sub orphans "$_ORPHANS"
+                info "$_NONE_FOUND"
+            else
+                ob=$(orphan_bytes "${PK[@]}")
+                [[ -n $ob ]] && ob=$(human "$ob") || ob="$nor $_PKGS"
+                item "$_ORPHANS" "<span> $ob </span>" orphans
+                sub orphans "$_ORPHANS"
+                local more=""
+                ((nor > 3)) && more=" ..."
+                info "$(cut -c1-35 <<<"$nor $_PKGS: ${PK[*]:0:3}$more")" "$_SIZE_INCL_DEPS"
+            fi
+            if ((nor > 0)); then
+                opt "$_REVIEW_LIST" "pacman -Qi" orphans review
+                opt "$_REMOVE_KEEP_CONFIGS" "pacman -R" orphans R
+                opt "$_REMOVE_WITH_DEPS" "pacman -Rs" orphans Rs
+                opt "$_BACKUP_THEN_REMOVE" "pacman -Rns" orphans backup
+                bad "$_REMOVE_DEPS_CONFIGS" "pacman -Rns" orphans Rns
+            fi
         fi
 
         local aurs=() aurdirs=()
@@ -514,7 +527,7 @@ fi
         hash yay 2>/dev/null && aurs+=(yay) && aurdirs+=("$CE_CACHE/yay")
         hash pamac 2>/dev/null && aurs+=(pamac) && aurdirs+=("/var/tmp/pamac-build-$USER")
         if ((${#aurs[@]})); then
-            if has_files "${aurdirs[@]}"; then
+            if ((!DYNAMIC)) || has_files "${aurdirs[@]}"; then
                 aurb=$(bytes_of "${aurdirs[@]}")
                 item "$_AUR_CACHE" "$(size_span "$aurb")" aur
                 sub aur "$_AUR_CACHE"
@@ -525,7 +538,7 @@ fi
             fi
         fi
 
-        if ((sb > 0)) || has_files "$CE_CACHE/thumbnails"; then
+        if ((!DYNAMIC || sb > 0)) || has_files "$CE_CACHE/thumbnails"; then
             item "$_THUMBS_CACHE" "$(size_span "$sb")" cache
             sub cache "$_THUMBS_CACHE"
             info "$_CACHE_INFO1" "$_WHOLE_CACHE $(human "$cb")" "$_CACHE_INFO3"
@@ -534,7 +547,7 @@ fi
             opt "$_STALE_FILES" "$_UNTOUCHED $(conf_days cache_days 30) $_DAYS_AGO" cache
         fi
 
-        if [[ -n $(find "$CE_TRASH/files" "$CE_TRASH/expunged" -mindepth 1 -print -quit 2>/dev/null) ]]; then
+        if ((!DYNAMIC)) || [[ -n $(find "$CE_TRASH/files" "$CE_TRASH/expunged" -mindepth 1 -print -quit 2>/dev/null) ]]; then
             item "$_TRASH" "$(size_span "$tb")" trash
             sub trash "$_TRASH"
             out2+=("$_OPEN $_TRASH,pcmanfm trash://")
@@ -588,7 +601,7 @@ fi
 
         if hash pacdiff 2>/dev/null; then
             leftn=$(pacdiff -o 2>/dev/null | wc -l)
-            if ((leftn > 0)); then
+            if ((!DYNAMIC || leftn > 0)); then
                 item "$_LEFTOVER" "<span> ${leftn} </span>" leftover
                 sub leftover "$_PACNEW_FILES"
                 info "$_LEFTOVER_INFO"
@@ -598,7 +611,7 @@ fi
         fi
 
         # no cleanup row left: the header becomes a plain separator above Downloads
-        ((${#out[@]} == hdr + 1)) && out[hdr]="^sep()"
+        ((DYNAMIC && ${#out[@]} == hdr + 1)) && out[hdr]="^sep()"
 
         local down downb
         down=$(xdg-user-dir DOWNLOAD)
@@ -634,6 +647,7 @@ out2+=("^sep($_DU_ALERT_LEVEL)")
 [[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;$SELF menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;$SELF menu settings")
 out2+=("^sep($_DIR_SIZE_MONITOR)")
 [[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;$SELF menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;$SELF menu settings")
+[[ "${dynamic_menu:-y}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n;$SELF menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y;$SELF menu settings")
 out2+=("^sep($_ICON_COLORS)")
 icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
 out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
