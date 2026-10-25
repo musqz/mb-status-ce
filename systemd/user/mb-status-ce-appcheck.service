@@ -1,6 +1,0 @@
-[Unit]
-Description=mb-status-ce flatpak and snap check
-
-[Service]
-Type=oneshot
-ExecStart=@BIN@ run appcheck

@@ -676,6 +676,17 @@ app_counted() { # flatpak | snap
     echo "$c"
 }
 
+# panel poll: refresh the flatpak/snap counts in the background when they are older than 3 hours
+app_refresh() {
+    local up
+    [[ -z $(find "$CE_APPUPD" -mmin -180 -print -quit 2>/dev/null) ]] || return 0
+    read -r up _ </proc/uptime
+    ((${up%.*} > 300)) || return 0 # network is not up right after login
+    { app_update_on flatpak && app_usable flatpak; } || { app_update_on snap && app_usable snap; } || return 0
+    mkdir -p "${CE_APPUPD%/*}"
+    setsid -f flock -n "$CE_APPUPD.lock" "$SELF" run appcheck >/dev/null 2>&1 </dev/null
+}
+
 # installed, and for snap snapd must be up (the binary ships without it)
 app_usable() { # flatpak | snap
     hash "$1" 2>/dev/null || return 1

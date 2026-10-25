@@ -59,7 +59,7 @@ Deleting a VM asks first and shows what goes:
 - `qemu_dir`: folders with quickemu VMs (`<name>.conf` next to a `<name>/` folder), comma separated, default `~/emu`. Example: `qemu_dir=~/emu, /mnt/data_work/emu`.
 - `dynamic_menu`: `y` hides cleanup rows with nothing to clean, `n` shows every row of the tools you have installed (checkbox in Settings).
 
-The pending flatpak and snap counts come from a user timer (`mb-status-ce-appcheck.timer`, every 3 hours). Run the check now with `mb-status-ce run appcheck`.
+The pending flatpak and snap counts refresh in the background when the panel updates, at most every 3 hours. Run the check now with `mb-status-ce run appcheck`.
 
 ## Install
 
@@ -69,13 +69,12 @@ cd mb-status-ce
 ./install.sh
 ```
 
-Installs `~/bin/mb-status-ce`, `~/.local/share/mb-status-ce/` and enables the timer `mb-status-ce-appcheck.timer`. Make sure `~/bin` is in `PATH` (default on Mabox).
+Installs `~/bin/mb-status-ce` and `~/.local/share/mb-status-ce/`. Make sure `~/bin` is in `PATH` (default on Mabox).
 
 System-wide:
 
 ```
 PREFIX=/usr SUDO=sudo ./install.sh
-systemctl --user enable --now mb-status-ce-appcheck.timer
 ```
 
 ## Uninstall
@@ -86,7 +85,7 @@ systemctl --user enable --now mb-status-ce-appcheck.timer
 
 Use the same `PREFIX` and `SUDO` as for the install. Your config `~/.config/mabox/mb-status-ce.conf` is kept.
 
-After a system-wide install, run `systemctl --user disable --now mb-status-ce-appcheck.timer` first.
+If an earlier version installed the timer, remove it: `systemctl --user disable --now mb-status-ce-appcheck.timer`, then delete the two `mb-status-ce-appcheck.*` unit files.
 
 ## Usage
 

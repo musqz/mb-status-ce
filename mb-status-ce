@@ -314,7 +314,7 @@ esac
         app_row() { # app glyph
             local cb v
             if app_update_on "$1"; then cb=$cbon; v=n; else cb=$cboff; v=y; fi
-            out+=("<big>$2</big>   $_UPDATE_APP <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;$SELF menu ipc")
+            out+=("<big>$2</big>   $_UPDATE_APP <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;mkdir -p ${CE_APPUPD%/*};touch -d @0 $CE_APPUPD;$SELF menu ipc")
         }
         app_usable flatpak && app_row flatpak 
         app_usable snap && app_row snap 
@@ -752,6 +752,7 @@ status() {
     [[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
     [[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
     echo "${msg}"
+    app_refresh
 }
 
 case "${1:-}" in
