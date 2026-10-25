@@ -30,7 +30,7 @@ Entries for tools that are not installed are hidden:
 - AUR helper cache: needs `paru`, `yay` or `pamac`.
 - Developer caches: only `go`, `npm`, `cargo-cache`, `pip`, `yarn`, `pnpm` that exist.
 - Containers: only `docker`, `flatpak`, `snap` that exist.
-- Virtual machines: needs the `vm_dir` folder with quickemu VMs.
+- Virtual machines: needs a `qemu_dir` folder with quickemu VMs.
 - Leftover configs: needs `pacdiff`. "Review and merge" also needs `meld`.
 - Update flatpak / snap rows: need `flatpak` / `snap` (snap also needs `snapd.socket` running).
 
@@ -40,7 +40,7 @@ Orphan packages, *Back up configs then remove*:
 
 ![mb-status-ce orphans backup](docs/orphans-backup.png)
 
-Virtual machines: quickemu VMs from `vm_dir` (default `~/emu`), size and last change per VM:
+Virtual machines: quickemu VMs from `qemu_dir` (default `~/emu`), size and last change per VM:
 
 ![mb-status-ce virtual machines](docs/vm-menu.png)
 
@@ -56,7 +56,7 @@ Deleting a VM asks first and shows what goes:
 - `thumb_days`: same for `~/.cache/thumbnails`.
 - `cache_ignore`: names in `~/.cache` that are never touched.
 - `update_flatpak`, `update_snap`: the checkboxes (`y` or `n`).
-- `vm_dir`: folder with quickemu VMs (`<name>.conf` next to a `<name>/` folder), default `~/emu`.
+- `qemu_dir`: folders with quickemu VMs (`<name>.conf` next to a `<name>/` folder), comma separated, default `~/emu`. Example: `qemu_dir=~/emu, /mnt/data_work/emu`.
 - `dynamic_menu`: `y` hides cleanup rows with nothing to clean, `n` shows every row of the tools you have installed (checkbox in Settings).
 
 The pending flatpak and snap counts come from a user timer (`mb-status-ce-appcheck.timer`, every 3 hours). Run the check now with `mb-status-ce run appcheck`.
