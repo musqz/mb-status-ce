@@ -1,22 +1,15 @@
 --- a/usr/bin/mb-status
 +++ b/usr/bin/mb-status
-@@ -1,69 +1,87 @@
--#!/bin/bash
-+#!/usr/bin/env bash
+@@ -5,6 +5,21 @@
+ # TODO: own commands below updates
+ # TODO: own commands at bottom
  
--# mb-status 󰳈 󰻌  󰂪 󰮯 : updates, disk space, dir sizes
--# TODO: additional configurable dirs to monitor
--# TODO: own commands below updates
--# TODO: own commands at bottom
-+# shellcheck disable=SC2034,SC2154  # variables are shared with jgtools.inc
-+# mb-status: updates, disk space and cleanup (jgmenu)
 +# usage: mb-status status | left | menu [ipc|settings] | run <action> [mode]
 +
 +SELF=$(readlink -f "$0")
 +for LIBDIR in "${SELF%/*}/lib" "${SELF%/*}/../share/mb-status" "$HOME/.local/share/mb-status" /usr/share/mb-status; do
 +    [[ -f $LIBDIR/mb-status-actions.sh ]] && break
 +done
-+# shellcheck source=lib/mb-status-actions.sh
 +. "$LIBDIR/mb-status-actions.sh"
 +
 +if [[ "${1:-}" == run ]]; then
@@ -25,51 +18,11 @@
 +    run_action "$@"
 +    exit 0
 +fi
- 
--CFGDIR="$HOME/.config/mabox"
++
+ CFGDIR="$HOME/.config/mabox"
  UPDATES_LIST="/tmp/updates/updates_list"
  AUR_UPDATES_LIST="/tmp/updates/aur_updates_list"
- mkdir -p /tmp/updates
--if [[ ! -f "$UPDATES_LIST" ]];then
--touch "$UPDATES_LIST"
--chmod 666 "${UPDATES_LIST}"
--fi
--if [[ ! -f "$AUR_UPDATES_LIST" ]]; then
--touch "$AUR_UPDATES_LIST"
--chmod 666 "$AUR_UPDATES_LIST"
--fi
--
--# all config values stored here!!!
--
--. $HOME/.config/mabox/mabox.conf
-+for f in "$UPDATES_LIST" "$AUR_UPDATES_LIST"; do
-+    if [[ ! -f "$f" ]]; then
-+        touch "$f"
-+        chmod 666 "$f"
-+    fi
-+done
- 
--if [ -z ${disk_limit+x} ]; then 
--mb-setvar disk_limit=90
--mb-setvar big_pkgs=0
--mb-setvar ok_icon=󰞑
--mb-setvar ok_fgcolor='#008000'
--mb-setvar warn_fgcolor='#FFFFFF'
--mb-setvar warn_bgcolor='#ff5722'
--mb-setvar dir_size_monitor=y
-+. "$HOME/.config/mabox/mabox.conf"
- 
--. $HOME/.config/mabox/mabox.conf
-+if [ -z "${disk_limit+x}" ]; then
-+    mb-setvar disk_limit=90
-+    mb-setvar big_pkgs=0
-+    mb-setvar ok_icon=󰞑
-+    mb-setvar ok_fgcolor='#008000'
-+    mb-setvar warn_fgcolor='#FFFFFF'
-+    mb-setvar warn_bgcolor='#ff5722'
-+    mb-setvar dir_size_monitor=y
-+    . "$HOME/.config/mabox/mabox.conf"
- fi
+@@ -36,6 +51,8 @@
  
  disk_limit=${disk_limit:-70}
  big_pkgs=${big_pkgs:-20}
@@ -78,27 +31,11 @@
  OK_ICON=${ok_icon:-"󰕥"}
  OK_FGCOLOR=${ok_fgcolor:-"#008000"}
  WARN_FGCOLOR=${warn_fgcolor:-"#FFFFFF"}
- WARN_BGCOLOR=${warn_bgcolor:-"#bd1e24"}
+@@ -54,13 +71,31 @@
  
--# install date
- INST=$(stat -c %W /)
--INSTDATE=$(stat -c %w /|awk '{print $1}')
--TODAY=$(date +%s)
--DIFF=$(( (TODAY - INST) / 86400 ))
--if [[ "$DIFF" > "1" ]];then
--DAGO="(${DIFF} ${DAYS_AGO})"
--else
--DAGO=""
--fi
--
--REPO=$(wc -l $UPDATES_LIST | awk '{print $1}')
--AUR=$(wc -l $AUR_UPDATES_LIST | awk '{print $1}')
+ REPO=$(wc -l $UPDATES_LIST | awk '{print $1}')
+ AUR=$(wc -l $AUR_UPDATES_LIST | awk '{print $1}')
 -upkgs=$((REPO + AUR))
-+INSTDATE=$(stat -c %w / | awk '{print $1}')
-+DIFF=$(( ($(date +%s) - INST) / 86400 ))
- 
-+REPO=$(wc -l < "$UPDATES_LIST")
-+AUR=$(wc -l < "$AUR_UPDATES_LIST")
 +FLATPAK=$(app_counted flatpak)
 +SNAP=$(app_counted snap)
 +upkgs=$((REPO + AUR + FLATPAK + SNAP))
@@ -106,14 +43,11 @@
 +((FLATPAK)) && APPS+=" flatpak: $FLATPAK"
 +((SNAP)) && APPS+=" snap: $SNAP"
  
--left(){
-+left() {
+ 
+ left(){
      menu ipc
  }
  
--## MENU
--menu(){
--. /usr/share/mb-jgtools/jgtools.inc
 +# size_span <bytes>: warn colour from 1G up, ok icon when (nearly) empty
 +size_span() {
 +    local h
@@ -127,12 +61,10 @@
 +    fi
 +}
 +
-+menu() {
-+    . /usr/share/mb-jgtools/jgtools.inc
- case $LANG in
- pl*)
- _KERNEL="jądro"
-@@ -115,6 +133,53 @@
+ ## MENU
+ menu(){
+ . /usr/share/mb-jgtools/jgtools.inc
+@@ -115,6 +150,53 @@
  _ICON="Ikona"
  _COLOR="Kolor"
  _ICON_COLORS="Kolory i Ikona"
@@ -186,7 +118,7 @@
  ;;
  *)	
  _KERNEL="kernel"
-@@ -166,10 +231,103 @@
+@@ -166,10 +248,103 @@
  _ICON="Icon"
  _COLOR="Color"
  _ICON_COLORS="Colors and Icon"
@@ -239,10 +171,8 @@
 +_EDIT_CLEANUP_CONF="Edit cleanup config"
  ;;
  esac
--tint2-send refresh-execp mb-status
--[[ "${1}" == "settings" ]] && option="--checkout=settings" || option=""
-+    tint2-send refresh-execp mb-status 2>/dev/null || true
-+    [[ "${1:-}" == "settings" ]] && option="--checkout=settings" || option=""
+ tint2-send refresh-execp mb-status
+ [[ "${1}" == "settings" ]] && option="--checkout=settings" || option=""
 +    init_conf
 +
 +    out=(); out2=(); out3=()
@@ -275,7 +205,7 @@
 +        app_row() { # app glyph
 +            local cb v
 +            if app_update_on "$1"; then cb=$cbon; v=n; else cb=$cboff; v=y; fi
-+            out+=("<big>$2</big>   $_UPDATE_APP <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;mkdir -p ${CE_APPUPD%/*};touch -d @0 $CE_APPUPD;$SELF menu ipc")
++            out+=("<big>$2</big>   $_UPDATE_APP <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;mkdir -p ${CE_APPUPD%/*};touch -d @0 $CE_APPUPD;mb-status menu ipc")
 +        }
 +        app_usable flatpak && app_row flatpak 
 +        app_usable snap && app_row snap 
@@ -292,7 +222,7 @@
  
  PKGS=$(pacman -Qq 2>/dev/null | wc -l)
  # kernel version
-@@ -225,12 +383,13 @@
+@@ -225,12 +400,13 @@
  
  if [[ "${upkgs}" == 0 ]];then
  out+=("^sep(<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span> <small><i>$_UP_TO_DATE</i></small>)") 
@@ -308,7 +238,7 @@
      out2+=("^tag(mirrors)")
      out2+=("^sep($_MIRROR_RANKING)")
      out2+=("Fasttrack       <small>pacman-mirrors -f5</small>,mb-cli mirrors")
-@@ -238,16 +397,16 @@
+@@ -238,16 +414,16 @@
      elif hash cachyos-kernel-manager 2>/dev/null;then
      out+=("$_RANK_MIRROR,^term(sudo cachyos-rate-mirrors)")
      out+=("^sep()")
@@ -328,7 +258,7 @@
  
  if hash pacman-mirrors 2>/dev/null;then
  if [[ "${updates}" -gt 10 ]];then
-@@ -255,107 +414,251 @@
+@@ -255,28 +431,33 @@
  fi
  fi
  
@@ -370,60 +300,10 @@
      fi
  fi
  
+@@ -312,49 +493,193 @@
+ 	done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
+ fi
  
--## DISCS
--if hash qdirstat 2>/dev/null;then 
--qdir=" -q" 
--else 
--qdir=""
--fi
--
--if [[ "${disk_limit}" -gt "0" ]];then
--	out+=("^sep($_DISCS)")
--    if hash btrfs-assistant-launcher 2>/dev/null;then
--    out+=("<b>Btrfs</b> Assistant,btrfs-assistant-launcher")
--    out+=("^sep()")
-+    ## DISCS
-+    local qdir=""
-+    hash qdirstat 2>/dev/null && qdir=" -q"
-+    if [[ "${disk_limit}" -gt 0 ]]; then
-+        out+=("^sep($_DISCS)")
-+        if hash btrfs-assistant-launcher 2>/dev/null; then
-+            out+=("<b>Btrfs</b> Assistant,btrfs-assistant-launcher" "^sep()")
-+        fi
-+        local mpoint="" DEVICE SIZE USED FREE PERCENT MOUNT MOUNTLBL ICON
-+        while read -r DEVICE SIZE USED FREE PERCENT MOUNT; do
-+            [[ "${#MOUNT}" -gt 10 ]] && MOUNTLBL=${MOUNT##*/} || MOUNTLBL=${MOUNT}
-+            [[ "${#MOUNTLBL}" -gt 10 ]] && MOUNTLBL=${MOUNTLBL:0:12}
-+            [[ "${MOUNT}" = *"media"* ]] && ICON="<big>󱊟</big>" || ICON="<big>󰋊</big>"
-+            if [[ "${PERCENT::-1}" -ge "${disk_limit}" ]]; then
-+                PERCENT="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${PERCENT} </span>"
-+            else
-+                PERCENT="<span> ${PERCENT} </span>"
-+            fi
-+            [[ "$DEVICE" == "$mpoint" ]] && continue
-+            out+=("$ICON  $MOUNTLBL  	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
-+            mpoint="${DEVICE}"
-+        done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
-     fi
--    mpoint=""
--	while read DEVICE SIZE USED FREE PERCENT MOUNT
--	do
--	[[ "${#MOUNT}" -gt "10" ]] && MOUNTLBL=${MOUNT##*/} || MOUNTLBL=${MOUNT}
--	[[ "${#MOUNTLBL}" -gt "10" ]] && MOUNTLBL=${MOUNTLBL:0:12}
--	[[ "${MOUNT}" = *"media"* ]] && ICON="<big>󱊟</big>" || ICON="<big>󰋊</big>"
--
--	[[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && PERCENT="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${PERCENT} </span>" || PERCENT="<span> ${PERCENT} </span>"
--	if [[ "$DEVICE" == "$mpoint" ]];then
--    continue
--    else
--    #out+=("$ICON  $MOUNTLBL  <small>$DEVICE</small>	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
--    out+=("$ICON  $MOUNTLBL  	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
--    mpoint="${DEVICE}"
--    fi
--	done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
--fi
--
 -## DIR SIZE MONITOR
 -if [[ "${dir_size_monitor}" == "y" ]];then
 -out+=("^sep($_DIR_SIZE_MONITOR)")
@@ -464,7 +344,7 @@
 -out2+=("^sep($_TRASH)")
 -out2+=("$_EMPTY $_TRASH,rm -r ~/.local/share/Trash/*/*;mb-status menu")
 -out2+=("$_OPEN $_TRASH,pcmanfm trash://")
- 
+-
 -out+=("\"\"\"$(basename $(xdg-user-dir DOWNLOAD))	${downsize}\"\"\",^pipe(jgbrowser $(xdg-user-dir DOWNLOAD)$qdir)")
 -fi
 +    local jb pb aurb cb sb tb thb nor leftn ob hdr t v vmb
@@ -650,195 +530,48 @@
 +        # no cleanup row left: the header becomes a plain separator above Downloads
 +        ((DYNAMIC && ${#out[@]} == hdr + 1)) && out[hdr]="^sep()"
 +
-+        local down downb
-+        down=$(xdg-user-dir DOWNLOAD)
-+        downb=$(bytes_of "$down")
-+        out+=("\"\"\"$(basename "$down")	$(size_span "$downb")\"\"\",^pipe(jgbrowser $down$qdir)")
++        downsize=$(du -sh $(xdg-user-dir DOWNLOAD)|awk '{print $1}')
++        [[ "${downsize}" == *G* ]] && downsize="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${downsize} </span>" || downsize="<span> ${downsize} </span>"
++        out+=("\"\"\"$(basename $(xdg-user-dir DOWNLOAD))	${downsize}\"\"\",^pipe(jgbrowser $(xdg-user-dir DOWNLOAD)$qdir)")
 +    fi
  
-+    ## SETTINGS
  out+=("^sep()")
  out+=("  $_SETTINGS,^checkout(settings)")
- out2+=("^tag(settings)")
-@@ -366,117 +669,94 @@
- [[ "${big_pkgs}" -gt "0" ]] && out2+=("<big>${cbon}</big>   $_SHOW_BIGGEST,^checkout(biggest)") || out2+=("<big>${cboff}</big>   $_SHOW_BIGGEST,^checkout(biggest)")
- out3+=("^tag(biggest)")
- out3+=("^sep($_HOW_MANY)")
--[[ "${big_pkgs}" == "0" ]] && out3+=("<big>${ron}</big>   0 ($_DISABLED),mb-setvar big_pkgs=0;mb-status menu ipc") || out3+=("<big>${roff}</big>   0 ($_DISABLED),mb-setvar big_pkgs=0;mb-status menu ipc")
-+[[ "${big_pkgs}" == "0" ]] && out3+=("<big>${ron}</big>   0 ($_DISABLED),mb-setvar big_pkgs=0;$SELF menu ipc") || out3+=("<big>${roff}</big>   0 ($_DISABLED),mb-setvar big_pkgs=0;$SELF menu ipc")
- out3+=("^sep()")
--[[ "${big_pkgs}" == "10" ]] && out3+=("<big>${ron}</big>   10,mb-setvar big_pkgs=10;mb-status menu ipc") || out3+=("<big>${roff}</big>   10,mb-setvar big_pkgs=10;mb-status menu ipc")
--[[ "${big_pkgs}" == "20" ]] && out3+=("<big>${ron}</big>   20,mb-setvar big_pkgs=20;mb-status menu ipc") || out3+=("<big>${roff}</big>   20,mb-setvar big_pkgs=20;mb-status menu ipc")
--[[ "${big_pkgs}" == "30" ]] && out3+=("<big>${ron}</big>   30,mb-setvar big_pkgs=30;mb-status menu ipc") || out3+=("<big>${roff}</big>   30,mb-setvar big_pkgs=30;mb-status menu ipc")
--[[ "${big_pkgs}" == "40" ]] && out3+=("<big>${ron}</big>   40,mb-setvar big_pkgs=40;mb-status menu ipc") || out3+=("<big>${roff}</big>   40,mb-setvar big_pkgs=40;mb-status menu ipc")
-+[[ "${big_pkgs}" == "10" ]] && out3+=("<big>${ron}</big>   10,mb-setvar big_pkgs=10;$SELF menu ipc") || out3+=("<big>${roff}</big>   10,mb-setvar big_pkgs=10;$SELF menu ipc")
-+[[ "${big_pkgs}" == "20" ]] && out3+=("<big>${ron}</big>   20,mb-setvar big_pkgs=20;$SELF menu ipc") || out3+=("<big>${roff}</big>   20,mb-setvar big_pkgs=20;$SELF menu ipc")
-+[[ "${big_pkgs}" == "30" ]] && out3+=("<big>${ron}</big>   30,mb-setvar big_pkgs=30;$SELF menu ipc") || out3+=("<big>${roff}</big>   30,mb-setvar big_pkgs=30;$SELF menu ipc")
-+[[ "${big_pkgs}" == "40" ]] && out3+=("<big>${ron}</big>   40,mb-setvar big_pkgs=40;$SELF menu ipc") || out3+=("<big>${roff}</big>   40,mb-setvar big_pkgs=40;$SELF menu ipc")
- fi
- 
- out2+=("^sep($_DU_ALERT_LEVEL)")
--[[ "$disk_limit" == "0" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 0 ($_DISABLED) </span>,mb-setvar disk_limit=0;mb-status menu settings") || out2+=("<big>${roff}</big>    0 ($_DISABLED),mb-setvar disk_limit=0;mb-status menu settings")
--[[ "$disk_limit" == "75" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 75% </span>,mb-setvar disk_limit=75;mb-status menu settings") || out2+=("<big>${roff}</big>    75%,mb-setvar disk_limit=75;mb-status menu settings")
--[[ "$disk_limit" == "80" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 80% </span>,mb-setvar disk_limit=80;mb-status menu settings") || out2+=("<big>${roff}</big>    80%,mb-setvar disk_limit=80;mb-status menu settings")
--[[ "$disk_limit" == "85" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 85% </span>,mb-setvar disk_limit=85;mb-status menu settings") || out2+=("<big>${roff}</big>    85%,mb-setvar disk_limit=85;mb-status menu settings")
--[[ "$disk_limit" == "90" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 90% </span>,mb-setvar disk_limit=90;mb-status menu settings") || out2+=("<big>${roff}</big>    90%,mb-setvar disk_limit=90;mb-status menu settings")
--[[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;mb-status menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;mb-status menu settings")
-+[[ "$disk_limit" == "0" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 0 ($_DISABLED) </span>,mb-setvar disk_limit=0;$SELF menu settings") || out2+=("<big>${roff}</big>    0 ($_DISABLED),mb-setvar disk_limit=0;$SELF menu settings")
-+[[ "$disk_limit" == "75" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 75% </span>,mb-setvar disk_limit=75;$SELF menu settings") || out2+=("<big>${roff}</big>    75%,mb-setvar disk_limit=75;$SELF menu settings")
-+[[ "$disk_limit" == "80" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 80% </span>,mb-setvar disk_limit=80;$SELF menu settings") || out2+=("<big>${roff}</big>    80%,mb-setvar disk_limit=80;$SELF menu settings")
-+[[ "$disk_limit" == "85" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 85% </span>,mb-setvar disk_limit=85;$SELF menu settings") || out2+=("<big>${roff}</big>    85%,mb-setvar disk_limit=85;$SELF menu settings")
-+[[ "$disk_limit" == "90" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 90% </span>,mb-setvar disk_limit=90;$SELF menu settings") || out2+=("<big>${roff}</big>    90%,mb-setvar disk_limit=90;$SELF menu settings")
-+[[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;$SELF menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;$SELF menu settings")
+@@ -383,6 +708,7 @@
+ [[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;mb-status menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;mb-status menu settings")
  out2+=("^sep($_DIR_SIZE_MONITOR)")
--[[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;mb-status menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;mb-status menu settings")
-+[[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;$SELF menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;$SELF menu settings")
-+[[ "${dynamic_menu:-y}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n;$SELF menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y;$SELF menu settings")
+ [[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;mb-status menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;mb-status menu settings")
++[[ "${dynamic_menu:-y}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n;mb-status menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y;mb-status menu settings")
  out2+=("^sep($_ICON_COLORS)")
  icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
  out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
- out3+=("^tag(icon)")
- out3+=("^sep($_ICON)")
--for i in ${icons[@]};do
--[[ "${OK_ICON}" == "${i}" ]] && out3+=("<big>${ron}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>") || out3+=("<big>${roff}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>,mb-setvar ok_icon=${i};mb-status menu settings")
-+for i in "${icons[@]}";do
-+[[ "${OK_ICON}" == "${i}" ]] && out3+=("<big>${ron}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>") || out3+=("<big>${roff}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>,mb-setvar ok_icon=${i};$SELF menu settings")
- done
- okcols=("#EEEEEE" "#CCCCCC" "#AAAAAA" "#222222" "#a4c400" "#60a917" "#288C44" "#008a00" "#00aba9" "#1ba1e2" "#3e65ff" "#f472d0")
- warncols=("#d80073" "#a20025" "#e51400" "#fa6800" "#f0a30a" "#e3c800")
- #out2+=("<span bgcolor='$OK_FGCOLOR'>       </span>   $_COLOR_OK,^checkout(colok)")
- #out3+=("^tag(colok)")
- out3+=("^sep($_COLOR)")
--for i in ${okcols[@]};do
--[[ "${OK_FGCOLOR}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>        </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>        </span>,mb-setvar ok_fgcolor=${i};mb-status menu settings")
-+for i in "${okcols[@]}";do
-+[[ "${OK_FGCOLOR}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>        </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>        </span>,mb-setvar ok_fgcolor=${i};$SELF menu settings")
- done
- out2+=("<span bgcolor='$WARN_BGCOLOR' fgcolor='$WARN_FGCOLOR'> $_WARN </span>,^checkout(colwarn)")
- out3+=("^tag(colwarn)")
- out3+=("^sep($_WARN)")
--[[ "${WARN_BGCOLOR}" == "#bd1e24" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#bd1e24' fgcolor='#FFFFFF'> warning </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#bd1e24' fgcolor='#FFFFFF'> warning </span>,mb-setvar warn_bgcolor='#bd1e24' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};mb-status menu settings")
--[[ "${WARN_BGCOLOR}" == "#e91e63" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#e91e63' fgcolor='#FFFFFF'> pink </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#e91e63' fgcolor='#FFFFFF'> pink </span>,mb-setvar warn_bgcolor='#e91e63' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};mb-status menu settings")
--[[ "${WARN_BGCOLOR}" == "#ff5722" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#ff5722' fgcolor='#FFFFFF'> deep orange </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#ff5722' fgcolor='#FFFFFF'> deep orange </span>,mb-setvar warn_bgcolor='#ff5722' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};mb-status menu settings")
--[[ "${WARN_BGCOLOR}" == "#ff9800" && "${WARN_FGCOLOR}" == "#000000" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#ff9800' fgcolor='#000000'> orange </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#ff9800' fgcolor='#000000'> orange </span>,mb-setvar warn_bgcolor='#ff9800' ${CONF_FILE};mb-setvar warn_fgcolor='#000000' ${CONF_FILE};mb-status menu settings")
--[[ "${WARN_BGCOLOR}" == "#f6c700" && "${WARN_FGCOLOR}" == "#000000" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#f6c700' fgcolor='#000000'> yellow </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#f6c700' fgcolor='#000000'> yellow </span>,mb-setvar warn_bgcolor='#f6c700' ${CONF_FILE};mb-setvar warn_fgcolor='#000000' ${CONF_FILE};mb-status menu settings")
--[[ "${WARN_BGCOLOR}" == "#000000" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#000000' fgcolor='#FFFFFF'> black </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#000000' fgcolor='#FFFFFF'> black </span>,mb-setvar warn_bgcolor='#000000' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};mb-status menu settings")
-+[[ "${WARN_BGCOLOR}" == "#bd1e24" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#bd1e24' fgcolor='#FFFFFF'> warning </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#bd1e24' fgcolor='#FFFFFF'> warning </span>,mb-setvar warn_bgcolor='#bd1e24' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
-+[[ "${WARN_BGCOLOR}" == "#e91e63" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#e91e63' fgcolor='#FFFFFF'> pink </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#e91e63' fgcolor='#FFFFFF'> pink </span>,mb-setvar warn_bgcolor='#e91e63' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
-+[[ "${WARN_BGCOLOR}" == "#ff5722" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#ff5722' fgcolor='#FFFFFF'> deep orange </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#ff5722' fgcolor='#FFFFFF'> deep orange </span>,mb-setvar warn_bgcolor='#ff5722' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
-+[[ "${WARN_BGCOLOR}" == "#ff9800" && "${WARN_FGCOLOR}" == "#000000" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#ff9800' fgcolor='#000000'> orange </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#ff9800' fgcolor='#000000'> orange </span>,mb-setvar warn_bgcolor='#ff9800' ${CONF_FILE};mb-setvar warn_fgcolor='#000000' ${CONF_FILE};$SELF menu settings")
-+[[ "${WARN_BGCOLOR}" == "#f6c700" && "${WARN_FGCOLOR}" == "#000000" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#f6c700' fgcolor='#000000'> yellow </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#f6c700' fgcolor='#000000'> yellow </span>,mb-setvar warn_bgcolor='#f6c700' ${CONF_FILE};mb-setvar warn_fgcolor='#000000' ${CONF_FILE};$SELF menu settings")
-+[[ "${WARN_BGCOLOR}" == "#000000" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#000000' fgcolor='#FFFFFF'> black </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#000000' fgcolor='#FFFFFF'> black </span>,mb-setvar warn_bgcolor='#000000' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
- #for i in ${warncols[@]};do
--#[[ "${COLOR_WARN}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>      </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>      </span>,mb-setvar color_warn=${i} ${CONF_FILE};mb-status menu settings")
-+#[[ "${COLOR_WARN}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>      </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>      </span>,mb-setvar color_warn=${i} ${CONF_FILE};$SELF menu settings")
+@@ -412,6 +738,7 @@
+ #[[ "${COLOR_WARN}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>      </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>      </span>,mb-setvar color_warn=${i} ${CONF_FILE};mb-status menu settings")
  #done
  
 +out2+=("^sep($_CLEANUP)" "$_EDIT_CLEANUP_CONF,xdg-open $CE_CONF")
  [[ "$1" == "settings" ]] && out2+=("^sep()" "${arrow_string_left} ${arrow_string_left} ${arrow_string_left},^back()")
  
-+    MENU_PADDING_TOP=${jgtools_padding:-0}
-+    POSITION_MODE="center"
-+    MENU_HALIGN="center"
-+    MENU_VALIGN="center"
-+    [[ "${1:-}" == "ipc" || "${1:-}" == "settings" ]] && POSITION_MODE="ipc"
-+    JGWIDTH=340
-+    TABS=230
-+    pidof picom >/dev/null && MENU_RADIUS=$jgtools_radius
-+    [ -z "${jgmenu_use_borders:-}" ] && menu_border=0
-+    icons=0
-+    iconmargin=0
-+    mkconfigfile
-+    echo menu_height_mode=dynamic >> "${CONFIG_FILE}"
-+
-+    {
-+        printf '%s\n' "${out[@]}"
-+        printf '%s\n' "${out2[@]}"
-+        printf '%s\n' "${out3[@]}"
-+    } > "${MENU_ITEMS}"
  
--#
--
--MENU_PADDING_TOP=${jgtools_padding:-0}
--POSITION_MODE="center"
--MENU_HALIGN="center"
--MENU_VALIGN="center"
--[[ "${1}" == "ipc" ]] && POSITION_MODE="ipc"
--[[ "${1}" == "settings" ]] && POSITION_MODE="ipc"
--#notify-send.sh "Pos" "${POSITION_MODE}"
+@@ -424,8 +751,8 @@
+ [[ "${1}" == "ipc" ]] && POSITION_MODE="ipc"
+ [[ "${1}" == "settings" ]] && POSITION_MODE="ipc"
+ #notify-send.sh "Pos" "${POSITION_MODE}"
 -JGWIDTH=300
 -TABS=190
--[ $(pidof picom) ] && MENU_RADIUS=$jgtools_radius
--[ -z $jgmenu_use_borders ] && menu_border=0
--icons=0
--iconmargin=0
--mkconfigfile
--echo menu_height_mode=dynamic >> ${CONFIG_FILE}
--
--cat <<EOF > ${MENU_ITEMS}
--$(printf '%s\n' "${out[@]}")
--$(printf '%s\n' "${out2[@]}")
--$(printf '%s\n' "${out3[@]}")
--EOF
--
--jgmenu --config-file=${CONFIG_FILE} --csv-file=${MENU_ITEMS} ${option} 2>/dev/null
--}
--#dnotify(){
--#LINK="exo-open --launch WebBrowser maboxlinux.org/donate"
--#yad --width="400" --center --height="80" --window-icon="mbcc" --borders="10" --image="emote-love" --image-on-top --title "Request for Donation" \
--#--text-align="center" --text="<big>Donate to Mabox         </big>" \
--#--form --align="center" \
--#--field="Mabox needs your help... Donations fund":LBL \
--#--field="development and infrastructure":LBL \
--#--field="important for Mabox's continued existence.":LBL \
--#--button="Donate":"$LINK" --button="No Thanks":"0"
--#}
--#updates=99
--status(){
--#if [[ "$DIFF" -gt "1" ]];then
--#DDATE=$(date +%Y-%m-%d)
--#if [[ $((DIFF % 100)) == "0" ]] && [[ ! -f "$CFGDIR/.$DDATE" ]];then
--#touch "$CFGDIR/.$DDATE"
--#dnotify &>/dev/null
--#fi
--#fi
--
--#disk space
--dirty=0
--if [[ "${disk_limit}" -gt "0" ]];then
--	while read DEVICE SIZE USED FREE PERCENT MOUNT
--	do
--	[[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && dirty=1
--	done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
--fi
--[[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
--[[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
--echo "${msg}"
-+    jgmenu --config-file="${CONFIG_FILE}" --csv-file="${MENU_ITEMS}" ${option} 2>/dev/null
++JGWIDTH=340
++TABS=230
+ [ $(pidof picom) ] && MENU_RADIUS=$jgtools_radius
+ [ -z $jgmenu_use_borders ] && menu_border=0
+ icons=0
+@@ -472,6 +799,7 @@
+ [[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
+ [[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
+ echo "${msg}"
++app_refresh
  }
  
-+status() {
-+    local dirty=0 DEVICE SIZE USED FREE PERCENT MOUNT msg
-+    if [[ "${disk_limit}" -gt 0 ]]; then
-+        while read -r DEVICE SIZE USED FREE PERCENT MOUNT; do
-+            [[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && dirty=1
-+        done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
-+    fi
-+    [[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
-+    [[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
-+    echo "${msg}"
-+    app_refresh
-+}
  
--case "$1" in
--    status) status;;
--    left) left;;
--    menu) menu "$2";;
-+case "${1:-}" in
-+    status) status ;;
-+    left) left ;;
-+    menu) menu "${2:-}" ;;
- esac
 --- /dev/null
 +++ b/usr/share/mb-status/mb-status-actions.sh
 @@ -0,0 +1,739 @@
