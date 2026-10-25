@@ -40,6 +40,14 @@ Orphan packages, *Back up configs then remove*:
 
 ![mb-status-ce orphans backup](docs/orphans-backup.png)
 
+Virtual machines: quickemu VMs from `vm_dir` (default `~/emu`), size and last change per VM:
+
+![mb-status-ce virtual machines](docs/vm-menu.png)
+
+Deleting a VM asks first and shows what goes:
+
+![mb-status-ce delete a virtual machine](docs/vm-delete.png)
+
 ## Configuration
 
 `~/.config/mabox/mb-status-ce.conf` is created on first run. Open it with *Settings → Edit cleanup config*.
