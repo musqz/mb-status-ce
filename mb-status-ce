@@ -132,6 +132,51 @@ _ICON_OK="OK ikona i kolor"
 _ICON="Ikona"
 _COLOR="Kolor"
 _ICON_COLORS="Kolory i Ikona"
+_UPDATE_APP="Aktualizuj"
+_JOURNAL_LOGS="Logi journala"
+_VACUUM_INFO1="Usuwa logi ponad limit."
+_VACUUM_INFO2="Ostatnie dane o awariach zostają."
+_PACCACHE_INFO1="Zachowaj 1-2 wersje: aktualizacje rolling"
+_PACCACHE_INFO2="czasem wymagają downgrade'u."
+_KEEP_3_VERSIONS="Zachowaj 3 wersje"
+_KEEP_1_VERSION="Zachowaj 1 wersję"
+_UNINSTALLED_PKGS="Odinstalowane pakiety"
+_REMOVE_EVERYTHING="Usuń wszystko"
+_ORPHANS="Pakiety osierocone"
+_NONE_FOUND="Brak."
+_SIZE_INCL_DEPS="Rozmiar z nieużywanymi zależnościami (-Rs)"
+_REVIEW_LIST="Przejrzyj listę"
+_REMOVE_KEEP_CONFIGS="Usuń (zachowaj konfiguracje)"
+_REMOVE_WITH_DEPS="Usuń z nieużywanymi zależnościami"
+_BACKUP_THEN_REMOVE="Kopia konfiguracji, potem usuń"
+_REMOVE_DEPS_CONFIGS="Usuń z zależnościami i konfiguracją"
+_NOTIFY_ORPHANS="Powiadamiaj o osieroconych"
+_AUR_CACHE="Cache pomocnika AUR"
+_AUR_INFO="Pobrane źródła i pliki budowania."
+_THUMBS_CACHE="Miniatury / .cache"
+_CACHE_INFO1="Rozmiar dotyczy tylko starych plików."
+_WHOLE_CACHE="Cały .cache:"
+_CACHE_INFO3="Lista ignorowanych: menu Ustawienia"
+_OLD_THUMBS="Stare miniatury"
+_OLDER_THAN="starsze niż"
+_ALL_THUMBS="Wszystkie miniatury"
+_STALE_FILES="Stare pliki w .cache"
+_UNTOUCHED="nieużywane od"
+_DEV_CACHES="Cache deweloperskie"
+_DEV_INFO="Narzędzia pobiorą lub zbudują je ponownie."
+_GO_BUILD_CACHE="Cache budowania Go"
+_GO_MOD_CACHE="Cache modułów Go"
+_CONTAINERS="Kontenery"
+_CONT_INFO1="Nieużywane obrazy i środowiska."
+_CONT_INFO2="Stare rewizje snap."
+_REMOVE_OLD_REVS="usuń stare rewizje"
+_LEFTOVER="Pozostałe konfiguracje"
+_PACNEW_FILES="pliki .pacnew / .pacsave"
+_LEFTOVER_INFO="Dla każdego pliku: zachowaj / scal / pomiń."
+_LIST_FILES="Lista plików"
+_REVIEW_MERGE="Przejrzyj i scal"
+_CLEANUP="Czyszczenie"
+_EDIT_CLEANUP_CONF="Edytuj konfigurację czyszczenia"
 ;;
 *)	
 _KERNEL="kernel"
@@ -183,6 +228,51 @@ _ICON_OK="OK icon and color"
 _ICON="Icon"
 _COLOR="Color"
 _ICON_COLORS="Colors and Icon"
+_UPDATE_APP="Update"
+_JOURNAL_LOGS="Journal logs"
+_VACUUM_INFO1="Deletes logs beyond the limit."
+_VACUUM_INFO2="Recent crash info stays."
+_PACCACHE_INFO1="Keep 1-2 versions: rolling updates"
+_PACCACHE_INFO2="sometimes need a downgrade."
+_KEEP_3_VERSIONS="Keep 3 versions"
+_KEEP_1_VERSION="Keep 1 version"
+_UNINSTALLED_PKGS="Uninstalled packages"
+_REMOVE_EVERYTHING="Remove everything"
+_ORPHANS="Orphan packages"
+_NONE_FOUND="None found."
+_SIZE_INCL_DEPS="Size incl. unused deps (-Rs)"
+_REVIEW_LIST="Review list"
+_REMOVE_KEEP_CONFIGS="Remove (keep configs)"
+_REMOVE_WITH_DEPS="Remove with unused deps"
+_BACKUP_THEN_REMOVE="Back up configs then remove"
+_REMOVE_DEPS_CONFIGS="Remove with deps and configs"
+_NOTIFY_ORPHANS="Notify about orphans"
+_AUR_CACHE="AUR helper cache"
+_AUR_INFO="Downloaded sources and build files."
+_THUMBS_CACHE="Thumbnails / .cache"
+_CACHE_INFO1="Size shown = stale files only."
+_WHOLE_CACHE="Whole .cache:"
+_CACHE_INFO3="Ignore list: Settings menu"
+_OLD_THUMBS="Old thumbnails"
+_OLDER_THAN="older than"
+_ALL_THUMBS="All thumbnails"
+_STALE_FILES="Stale files in .cache"
+_UNTOUCHED="untouched"
+_DEV_CACHES="Developer caches"
+_DEV_INFO="Tools refetch or rebuild it."
+_GO_BUILD_CACHE="Go build cache"
+_GO_MOD_CACHE="Go module cache"
+_CONTAINERS="Containers"
+_CONT_INFO1="Unused images and runtimes."
+_CONT_INFO2="Old snap revisions."
+_REMOVE_OLD_REVS="remove old revisions"
+_LEFTOVER="Leftover configs"
+_PACNEW_FILES=".pacnew / .pacsave files"
+_LEFTOVER_INFO="Per file: keep / merge / skip."
+_LIST_FILES="List files"
+_REVIEW_MERGE="Review and merge"
+_CLEANUP="Cleanup"
+_EDIT_CLEANUP_CONF="Edit cleanup config"
 ;;
 esac
     tint2-send refresh-execp mb-status-ce 2>/dev/null || true
@@ -218,7 +308,7 @@ esac
         app_row() { # app glyph
             local cb v
             if app_update_on "$1"; then cb=$cbon; v=n; else cb=$cboff; v=y; fi
-            out+=("<big>$2</big>   Update <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;$SELF menu ipc")
+            out+=("<big>$2</big>   $_UPDATE_APP <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;$SELF menu ipc")
         }
         app_usable flatpak && app_row flatpak 
         app_usable snap && app_row snap 
@@ -353,7 +443,7 @@ fi
     local qdir=""
     hash qdirstat 2>/dev/null && qdir=" -q"
     if [[ "${disk_limit}" -gt 0 ]]; then
-        out+=("^sep(Discs)")
+        out+=("^sep($_DISCS)")
         if hash btrfs-assistant-launcher 2>/dev/null; then
             out+=("<b>Btrfs</b> Assistant,btrfs-assistant-launcher" "^sep()")
         fi
@@ -373,140 +463,136 @@ fi
         done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
     fi
 
-    ## CLEANUP
     local jb pb aurb cb sb tb thb nor leftn ob
-    jb=$(journal_bytes)
-    pb=$(bytes_of /var/cache/pacman/pkg)
-    mapfile -t PK < <(orphans)
-    nor=${#PK[@]}
-    tb=$(bytes_of "$CE_TRASH")
-    cb=$(bytes_of "$CE_CACHE")
-    # shellcheck disable=SC2046
-    sb=$(stale_bytes "$CE_CACHE" "$(conf_days cache_days 30)" $(conf_get cache_ignore ""))
-    thb=$(bytes_of "$CE_CACHE/thumbnails")
-
-    out+=("^sep(Cleanup)")
-    item "Journal logs" "$(size_span "$jb")" journal
-    sub journal "Journal logs"
-    info "Deletes logs beyond the limit." "Recent crash info stays."
-    opt "Keep 1 day" "journalctl --vacuum-time=1d" journal 1d
-    opt "Keep 7 days" "journalctl --vacuum-time=7d" journal 7d
-    opt "Keep 200M" "journalctl --vacuum-size=200M" journal 200M
-    opt "Keep 500M" "journalctl --vacuum-size=500M" journal 500M
-
-    item "Pacman cache" "$(size_span "$pb")" paccache
-    sub paccache "Pacman cache"
-    info "Keep 1-2 versions: rolling updates" "sometimes need a downgrade."
-    opt "Keep 3 versions" "paccache -rk3" paccache k3
-    opt "Keep 1 version" "paccache -rk1" paccache k1
-    opt "Uninstalled packages" "paccache -ruk0" paccache uninstalled
-    bad "Remove everything" "pacman -Scc" paccache all
-
-    if ((nor == 0)); then
-        item "Orphan packages" "<span fgcolor='${OK_FGCOLOR}'>   </span>" orphans
-    else
-        ob=$(orphan_bytes "${PK[@]}")
-        [[ -n $ob ]] && ob=$(human "$ob") || ob="$nor pkgs"
-        item "Orphan packages" "<span> $ob </span>" orphans
-    fi
-    sub orphans "Orphan packages"
-    if ((nor == 0)); then
-        info "None found."
-    else
-        local more=""
-        ((nor > 3)) && more=" ..."
-        info "$(cut -c1-35 <<<"$nor pkgs: ${PK[*]:0:3}$more")" "Size incl. unused deps (-Rs)"
-    fi
-    opt "Review list" "pacman -Qi" orphans review
-    opt "Remove (keep configs)" "pacman -R" orphans R
-    opt "Remove with unused deps" "pacman -Rs" orphans Rs
-    opt "Back up configs then remove" "pacman -Rns" orphans backup
-    bad "Remove with deps and configs" "pacman -Rns" orphans Rns
-    if hash notify-send.sh 2>/dev/null; then
-        if [[ $(conf_get notify_orphans n) == y ]]; then
-            out2+=("<big>${cbon}</big>   Notify about orphans,mb-setvar notify_orphans=n $CE_CONF;$SELF menu ipc")
-        else
-            out2+=("<big>${cboff}</big>   Notify about orphans,mb-setvar notify_orphans=y $CE_CONF;$SELF run orphancheck;$SELF menu ipc")
-        fi
-    fi
-
-    local aurs=()
-    hash paru 2>/dev/null && aurs+=(paru)
-    hash yay 2>/dev/null && aurs+=(yay)
-    hash pamac 2>/dev/null && aurs+=(pamac)
-    if ((${#aurs[@]})); then
-        aurb=$(bytes_of "$CE_CACHE/paru" "$CE_CACHE/yay")
-        item "AUR helper cache" "$(size_span "$aurb")" aur
-        sub aur "AUR helper cache"
-        info "Downloaded sources and build files."
-        hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
-        hash yay 2>/dev/null && opt "yay" "yay -Sc --aur" aur yay
-        hash pamac 2>/dev/null && opt "pamac" "pamac clean -b" aur pamac
-    fi
-
-    item "Thumbnails / .cache" "$(size_span "$sb")" cache
-    sub cache "Thumbnails / .cache"
-    info "Size shown = stale files only." "Whole .cache: $(human "$cb")" "Ignore list: Settings menu"
-    opt "Old thumbnails" "older than $(conf_days thumb_days 14) days" thumbs
-    opt "All thumbnails ($(human "$thb"))" "find ... -delete" thumbs all
-    opt "Stale files in .cache" "untouched $(conf_days cache_days 30) days" cache
-
-    sub trash "Trash"
-    out2+=("Open Trash,pcmanfm trash://")
-    bad "Empty Trash" "find ... -delete" trash
-
-    local dev=()
-    hash go 2>/dev/null && dev+=(go)
-    hash npm 2>/dev/null && dev+=(npm)
-    hash cargo-cache 2>/dev/null && dev+=(cargo)
-    hash pip 2>/dev/null && dev+=(pip)
-    hash yarn 2>/dev/null && dev+=(yarn)
-    hash pnpm 2>/dev/null && dev+=(pnpm)
-    if ((${#dev[@]})); then
-        item "Developer caches" "" dev
-        sub dev "Developer caches"
-        info "Tools refetch or rebuild it."
-        hash go 2>/dev/null && opt "Go build cache" "go clean -cache" dev go
-        hash npm 2>/dev/null && opt "npm verify" "npm cache verify" dev npm-verify
-        hash npm 2>/dev/null && opt "npm clean" "npm cache clean --force" dev npm
-        hash cargo-cache 2>/dev/null && opt "cargo" "cargo cache --autoclean" dev cargo
-        hash pip 2>/dev/null && opt "pip" "pip cache purge" dev pip
-        hash yarn 2>/dev/null && opt "yarn" "yarn cache clean" dev yarn
-        hash pnpm 2>/dev/null && opt "pnpm" "pnpm store prune" dev pnpm
-        hash go 2>/dev/null && bad "Go module cache" "go clean -modcache" dev gomod
-    fi
-
-    local cont=()
-    hash docker 2>/dev/null && cont+=(docker)
-    hash flatpak 2>/dev/null && cont+=(flatpak)
-    hash snap 2>/dev/null && cont+=(snap)
-    if ((${#cont[@]})); then
-        item "Containers" "" containers
-        sub containers "Containers"
-        info "Unused images and runtimes." "Old snap revisions."
-        hash docker 2>/dev/null && opt "docker" "system prune" containers docker
-        hash flatpak 2>/dev/null && opt "flatpak" "uninstall --unused" containers flatpak
-        hash snap 2>/dev/null && opt "snap" "remove old revisions" containers snap
-    fi
-
-    if hash pacdiff 2>/dev/null; then
-        leftn=$(pacdiff -o 2>/dev/null | wc -l)
-        item "Leftover configs" "<span> ${leftn} </span>" leftover
-        sub leftover ".pacnew / .pacsave files"
-        info "Per file: keep / merge / skip."
-        opt "List files" "pacdiff -o" leftover list
-        hash meld 2>/dev/null && opt "Review and merge" "pacdiff + meld" leftover merge
-    fi
-
-    ## DIR SIZE MONITOR
+    ## DIR SIZE MONITOR: cleanup rows and sizes; hidden entirely when off
     if [[ "${dir_size_monitor}" == "y" ]]; then
+        jb=$(journal_bytes)
+        pb=$(bytes_of /var/cache/pacman/pkg)
+        mapfile -t PK < <(orphans)
+        nor=${#PK[@]}
+        tb=$(bytes_of "$CE_TRASH")
+        cb=$(bytes_of "$CE_CACHE")
+        # shellcheck disable=SC2046
+        sb=$(stale_bytes "$CE_CACHE" "$(conf_days cache_days 30)" $(conf_get cache_ignore ""))
+        thb=$(bytes_of "$CE_CACHE/thumbnails")
+
+        out+=("^sep($_DIR_SIZE_MONITOR)")
+        item "$_LOGS" "$(size_span "$jb")" journal
+        item "$_PACMAN_CACHE" "$(size_span "$pb")" paccache
+        sub journal "$_JOURNAL_LOGS"
+        info "$_VACUUM_INFO1" "$_VACUUM_INFO2"
+        opt "$_VACUUM_1DAY" "journalctl --vacuum-time=1d" journal 1d
+        opt "$_VACUUM_7DAYS" "journalctl --vacuum-time=7d" journal 7d
+        opt "$_VACUUM_200M" "journalctl --vacuum-size=200M" journal 200M
+        opt "$_VACUUM_500M" "journalctl --vacuum-size=500M" journal 500M
+
+        sub paccache "$_PACMAN_CACHE"
+        info "$_PACCACHE_INFO1" "$_PACCACHE_INFO2"
+        opt "$_KEEP_3_VERSIONS" "paccache -rk3" paccache k3
+        opt "$_KEEP_1_VERSION" "paccache -rk1" paccache k1
+        opt "$_UNINSTALLED_PKGS" "paccache -ruk0" paccache uninstalled
+        bad "$_REMOVE_EVERYTHING" "pacman -Scc" paccache all
+
+        if ((nor == 0)); then
+            item "$_ORPHANS" "<span fgcolor='${OK_FGCOLOR}'>   </span>" orphans
+        else
+            ob=$(orphan_bytes "${PK[@]}")
+            [[ -n $ob ]] && ob=$(human "$ob") || ob="$nor $_PKGS"
+            item "$_ORPHANS" "<span> $ob </span>" orphans
+        fi
+        sub orphans "$_ORPHANS"
+        if ((nor == 0)); then
+            info "$_NONE_FOUND"
+        else
+            local more=""
+            ((nor > 3)) && more=" ..."
+            info "$(cut -c1-35 <<<"$nor $_PKGS: ${PK[*]:0:3}$more")" "$_SIZE_INCL_DEPS"
+        fi
+        opt "$_REVIEW_LIST" "pacman -Qi" orphans review
+        opt "$_REMOVE_KEEP_CONFIGS" "pacman -R" orphans R
+        opt "$_REMOVE_WITH_DEPS" "pacman -Rs" orphans Rs
+        opt "$_BACKUP_THEN_REMOVE" "pacman -Rns" orphans backup
+        bad "$_REMOVE_DEPS_CONFIGS" "pacman -Rns" orphans Rns
+        if hash notify-send.sh 2>/dev/null; then
+            if [[ $(conf_get notify_orphans n) == y ]]; then
+                out2+=("<big>${cbon}</big>   $_NOTIFY_ORPHANS,mb-setvar notify_orphans=n $CE_CONF;$SELF menu ipc")
+            else
+                out2+=("<big>${cboff}</big>   $_NOTIFY_ORPHANS,mb-setvar notify_orphans=y $CE_CONF;$SELF run orphancheck;$SELF menu ipc")
+            fi
+        fi
+
+        local aurs=()
+        hash paru 2>/dev/null && aurs+=(paru)
+        hash yay 2>/dev/null && aurs+=(yay)
+        hash pamac 2>/dev/null && aurs+=(pamac)
+        if ((${#aurs[@]})); then
+            aurb=$(bytes_of "$CE_CACHE/paru" "$CE_CACHE/yay")
+            item "$_AUR_CACHE" "$(size_span "$aurb")" aur
+            sub aur "$_AUR_CACHE"
+            info "$_AUR_INFO"
+            hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
+            hash yay 2>/dev/null && opt "yay" "yay -Sc --aur" aur yay
+            hash pamac 2>/dev/null && opt "pamac" "pamac clean -b" aur pamac
+        fi
+
+        item "$_THUMBS_CACHE" "$(size_span "$sb")" cache
+        sub cache "$_THUMBS_CACHE"
+        info "$_CACHE_INFO1" "$_WHOLE_CACHE $(human "$cb")" "$_CACHE_INFO3"
+        opt "$_OLD_THUMBS" "$_OLDER_THAN $(conf_days thumb_days 14) $_DAYS_AGO" thumbs
+        opt "$_ALL_THUMBS ($(human "$thb"))" "find ... -delete" thumbs all
+        opt "$_STALE_FILES" "$_UNTOUCHED $(conf_days cache_days 30) $_DAYS_AGO" cache
+
+        sub trash "$_TRASH"
+        out2+=("$_OPEN $_TRASH,pcmanfm trash://")
+        bad "$_EMPTY $_TRASH" "find ... -delete" trash
+
+        local dev=()
+        hash go 2>/dev/null && dev+=(go)
+        hash npm 2>/dev/null && dev+=(npm)
+        hash cargo-cache 2>/dev/null && dev+=(cargo)
+        hash pip 2>/dev/null && dev+=(pip)
+        hash yarn 2>/dev/null && dev+=(yarn)
+        hash pnpm 2>/dev/null && dev+=(pnpm)
+        if ((${#dev[@]})); then
+            item "$_DEV_CACHES" "" dev
+            sub dev "$_DEV_CACHES"
+            info "$_DEV_INFO"
+            hash go 2>/dev/null && opt "$_GO_BUILD_CACHE" "go clean -cache" dev go
+            hash npm 2>/dev/null && opt "npm verify" "npm cache verify" dev npm-verify
+            hash npm 2>/dev/null && opt "npm clean" "npm cache clean --force" dev npm
+            hash cargo-cache 2>/dev/null && opt "cargo" "cargo cache --autoclean" dev cargo
+            hash pip 2>/dev/null && opt "pip" "pip cache purge" dev pip
+            hash yarn 2>/dev/null && opt "yarn" "yarn cache clean" dev yarn
+            hash pnpm 2>/dev/null && opt "pnpm" "pnpm store prune" dev pnpm
+            hash go 2>/dev/null && bad "$_GO_MOD_CACHE" "go clean -modcache" dev gomod
+        fi
+
+        local cont=()
+        hash docker 2>/dev/null && cont+=(docker)
+        hash flatpak 2>/dev/null && cont+=(flatpak)
+        hash snap 2>/dev/null && cont+=(snap)
+        if ((${#cont[@]})); then
+            item "$_CONTAINERS" "" containers
+            sub containers "$_CONTAINERS"
+            info "$_CONT_INFO1" "$_CONT_INFO2"
+            hash docker 2>/dev/null && opt "docker" "system prune" containers docker
+            hash flatpak 2>/dev/null && opt "flatpak" "uninstall --unused" containers flatpak
+            hash snap 2>/dev/null && opt "snap" "$_REMOVE_OLD_REVS" containers snap
+        fi
+
+        if hash pacdiff 2>/dev/null; then
+            leftn=$(pacdiff -o 2>/dev/null | wc -l)
+            item "$_LEFTOVER" "<span> ${leftn} </span>" leftover
+            sub leftover "$_PACNEW_FILES"
+            info "$_LEFTOVER_INFO"
+            opt "$_LIST_FILES" "pacdiff -o" leftover list
+            hash meld 2>/dev/null && opt "$_REVIEW_MERGE" "pacdiff + meld" leftover merge
+        fi
+
         local down downb
         down=$(xdg-user-dir DOWNLOAD)
         downb=$(bytes_of "$down")
-        out+=("^sep(Directory size monitor)")
-        item "Logs  <small>/var/log/journal</small>" "$(size_span "$jb")" journal
-        item "Pacman cache" "$(size_span "$pb")" paccache
-        item "Trash Can" "$(size_span "$tb")" trash
+        item "$_TRASH" "$(size_span "$tb")" trash
         out+=("\"\"\"$(basename "$down")	$(size_span "$downb")\"\"\",^pipe(jgbrowser $down$qdir)")
     fi
 
@@ -567,7 +653,7 @@ out3+=("^sep($_WARN)")
 #[[ "${COLOR_WARN}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>      </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>      </span>,mb-setvar color_warn=${i} ${CONF_FILE};$SELF menu settings")
 #done
 
-out2+=("^sep(Cleanup)" "Edit cleanup config,xdg-open $CE_CONF")
+out2+=("^sep($_CLEANUP)" "$_EDIT_CLEANUP_CONF,xdg-open $CE_CONF")
 [[ "$1" == "settings" ]] && out2+=("^sep()" "${arrow_string_left} ${arrow_string_left} ${arrow_string_left},^back()")
 
     MENU_PADDING_TOP=${jgtools_padding:-0}
