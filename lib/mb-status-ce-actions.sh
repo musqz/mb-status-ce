@@ -489,6 +489,34 @@ act_dev() {
 
 snap_old() { snap list --all | awk '/disabled/{print $1, $3}'; }
 
+# the checks below back the menu rows: true only when the action would find something
+has_files() { [[ -n $(find "$@" -type f -print -quit 2>/dev/null) ]]; }
+
+snap_has_old() { app_usable snap && [[ -n $(snap_old 2>/dev/null) ]]; }
+
+flatpak_unused() {
+    hash flatpak 2>/dev/null || return 1
+    LC_ALL=C timeout 5 flatpak uninstall --unused --assumeno 2>&1 </dev/null | grep -q -E '^ *1\.'
+}
+
+docker_prunable() {
+    hash docker 2>/dev/null && timeout 3 docker info >/dev/null 2>&1 || return 1
+    [[ -n $(timeout 3 docker ps -aq -f status=exited -f status=created 2>/dev/null) ||
+       -n $(timeout 3 docker images -qf dangling=true 2>/dev/null) ]]
+}
+
+dev_has() { # tool
+    case $1 in
+        go) hash go 2>/dev/null && has_files "$(go env GOCACHE)" ;;
+        gomod) hash go 2>/dev/null && has_files "$(go env GOMODCACHE)" ;;
+        npm) hash npm 2>/dev/null && has_files "${npm_config_cache:-$HOME/.npm}/_cacache" ;;
+        cargo) hash cargo-cache 2>/dev/null && has_files "${CARGO_HOME:-$HOME/.cargo}/registry" ;;
+        pip) hash pip 2>/dev/null && has_files "$CE_CACHE/pip" ;;
+        yarn) hash yarn 2>/dev/null && has_files "$CE_CACHE/yarn" ;;
+        pnpm) hash pnpm 2>/dev/null && has_files "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" ;;
+    esac
+}
+
 snap_remove_old() {
     local name rev
     while read -r name rev; do
