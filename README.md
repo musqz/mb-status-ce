@@ -51,7 +51,7 @@ The pending flatpak and snap counts come from a user timer (`mb-status-ce-appche
 ## Install
 
 ```
-git clone https://codeberg.org/linux-bird/mb-status-ce.git
+git clone https://github.com/musqz/mb-status-ce.git
 cd mb-status-ce
 ./install.sh
 ```
