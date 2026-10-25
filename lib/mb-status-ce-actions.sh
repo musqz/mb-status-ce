@@ -557,16 +557,6 @@ vm_ids() {
 
 vm_path() { echo "${VMDIRS[${1%%:*}]}/${1#*:}"; } # id -> folder; the .conf is "$(vm_path id).conf"
 
-vm_label() { # name, plus its folder when several are configured
-    local n=${1#*:} d
-    if ((${#VMDIRS[@]} > 1)); then
-        d=${VMDIRS[${1%%:*}]}
-        echo "$n  <small>(${d/#$HOME/\~})</small>"
-    else
-        echo "$n"
-    fi
-}
-
 vm_size() { local p; p=$(vm_path "$1"); bytes_of "$p" "$p.conf"; }
 
 vm_date() { # last change of the disk, else of the folder
