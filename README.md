@@ -91,7 +91,7 @@ If an earlier version installed the timer, remove it: `systemctl --user disable 
 
 `packaging/mabox-dropin.sh` writes `dist/mabox/`: the script as `mb-status`, its helper under `usr/share/mb-status/` and `mb-status.diff` against the installed `mb-status`.
 
-Apply the diff to a stock `mabox-tools` install: `cd / && sudo patch -p1 < dist/mabox/mb-status.diff`. It uses `~/.config/mabox/mb-status.conf` for the cleanup settings.
+Download `mb-status.diff` from the [latest release](https://github.com/musqz/mb-status-ce/releases/latest) or build it, then apply it to a stock `mabox-tools` install: `cd / && sudo patch -p1 < mb-status.diff`. It uses `~/.config/mabox/mb-status.conf` for the cleanup settings.
 
 ## Usage
 
