@@ -40,7 +40,7 @@ Orphan packages, *Back up configs then remove*:
 
 ![mb-status-ce orphans backup](docs/orphans-backup.png)
 
-Virtual machines: quickemu VMs from `qemu_dir` (default `~/emu`), size and last change per VM:
+Virtual machines: quickemu VMs from the `qemu_dir` folders (default `~/emu`), grouped by folder, with size and last change per VM:
 
 ![mb-status-ce virtual machines](docs/vm-menu.png)
 
