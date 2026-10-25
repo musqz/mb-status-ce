@@ -1,0 +1,612 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2034,SC2154  # variables are shared with jgtools.inc
+# mb-status-ce: mb-status with a cleanup section (jgmenu)
+# usage: mb-status-ce status | left | menu [ipc|settings] | run <action> [mode]
+
+SELF=$(readlink -f "$0")
+for LIBDIR in "${SELF%/*}/lib" "${SELF%/*}/../share/mb-status-ce" "$HOME/.local/share/mb-status-ce" /usr/share/mb-status-ce; do
+    [[ -f $LIBDIR/mb-status-ce-actions.sh ]] && break
+done
+# shellcheck source=lib/mb-status-ce-actions.sh
+. "$LIBDIR/mb-status-ce-actions.sh"
+
+if [[ "${1:-}" == run ]]; then
+    set -euo pipefail
+    shift
+    run_action "$@"
+    exit 0
+fi
+
+UPDATES_LIST="/tmp/updates/updates_list"
+AUR_UPDATES_LIST="/tmp/updates/aur_updates_list"
+mkdir -p /tmp/updates
+for f in "$UPDATES_LIST" "$AUR_UPDATES_LIST"; do
+    if [[ ! -f "$f" ]]; then
+        touch "$f"
+        chmod 666 "$f"
+    fi
+done
+
+. "$HOME/.config/mabox/mabox.conf"
+
+if [ -z "${disk_limit+x}" ]; then
+    mb-setvar disk_limit=90
+    mb-setvar big_pkgs=0
+    mb-setvar ok_icon=󰞑
+    mb-setvar ok_fgcolor='#008000'
+    mb-setvar warn_fgcolor='#FFFFFF'
+    mb-setvar warn_bgcolor='#ff5722'
+    mb-setvar dir_size_monitor=y
+    . "$HOME/.config/mabox/mabox.conf"
+fi
+
+disk_limit=${disk_limit:-70}
+big_pkgs=${big_pkgs:-20}
+dir_size_monitor=${dir_size_monitor:-y}
+OK_ICON=${ok_icon:-"󰕥"}
+OK_FGCOLOR=${ok_fgcolor:-"#008000"}
+WARN_FGCOLOR=${warn_fgcolor:-"#FFFFFF"}
+WARN_BGCOLOR=${warn_bgcolor:-"#bd1e24"}
+
+INST=$(stat -c %W /)
+INSTDATE=$(stat -c %w / | awk '{print $1}')
+DIFF=$(( ($(date +%s) - INST) / 86400 ))
+
+REPO=$(wc -l < "$UPDATES_LIST")
+AUR=$(wc -l < "$AUR_UPDATES_LIST")
+FLATPAK=$(app_counted flatpak)
+SNAP=$(app_counted snap)
+upkgs=$((REPO + AUR + FLATPAK + SNAP))
+APPS=""
+((FLATPAK)) && APPS+=" flatpak: $FLATPAK"
+((SNAP)) && APPS+=" snap: $SNAP"
+
+left() {
+    menu ipc
+}
+
+# size_span <bytes>: warn colour from 1G up, ok icon when (nearly) empty
+size_span() {
+    local h
+    h=$(human "$1")
+    if [[ $h == *[GT] || $h == *[GT]i ]]; then
+        echo "<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${h} </span>"
+    elif [[ $h == *K || $h == 0 ]]; then
+        echo "<span fgcolor='${OK_FGCOLOR}'>   </span>"
+    else
+        echo "<span> ${h} </span>"
+    fi
+}
+
+menu() {
+    . /usr/share/mb-jgtools/jgtools.inc
+case $LANG in
+pl*)
+_KERNEL="jądro"
+_PKGS="pakiety"
+_BIGGEST_PKGS="największe pakiety"
+_CLICK_PKG_INFO="kliknij nazwę po info"
+_PKGS_STATS="Statystyki pakietów"
+_QDIRPKG="QDirStat (GUI)"
+_INSTALLED="zainstalowany"
+_DAYS_AGO="dni"
+_YESTERDAY="wczoraj"
+_TODAY="dzisiaj"
+_UP_TO_DATE="System jest aktualny"
+_CHECK_NOW="Sprawdź aktualizacje teraz!"
+_PENDING="Dostępne aktualizacje"
+_GO_TO_FORUM="Idź na forum"
+_UPDATE_YAY="Aktualizuj za pomocą <b>yay</b>"
+_UPDATE_PARU="Aktualizuj za pomocą <b>paru</b>"
+_NO_AUR="(bez AUR)"
+_UPDATE_PACMAN="Aktualizuj za pomocą <b>pacman</b>"
+_UPDATE_PAMAC="Aktualizuj <b>Pamac</b> (gui)"
+_RENEW_KEYS="Odśwież klucze (PGP)"
+_RANK_MIRROR="Ranking mirrorów"
+_MIRROR_RANKING="Ranking mirrorów"
+_DISCS="Dyski"
+_DIR_SIZE_MONITOR="Monitor wielkości katalogów"
+_LOGS="Logi  <small>/var/log/journal</small>"
+_VACUUM_LOGS="Czyść Logi"
+_VACUUM_1DAY="Zachowaj z 1 dnia"
+_VACUUM_7DAYS="Zachowaj z 7 dni"
+_VACUUM_200M="Zachowaj 200M"
+_VACUUM_500M="Zachowaj 500M"
+
+_PACMAN_CACHE="Cache Pacmana"
+_EMPTY_PACMAN_CACHE="Wyczyść cache pacmana"
+_TRASH="Śmietnik"
+_OPEN="Otwórz"
+_EMPTY="Opróżnij"
+
+_QDIRSTAT="QDirStat (statystyki katalogów)"
+
+_SETTINGS="Ustawienia"
+_SHOW_BIGGEST="Pokaż listę największych pakietów"
+_HOW_MANY="Ile pakietów pokazać?"
+_DISABLED="wyłączone"
+_DU_ALERT_LEVEL="Poziom alertu zajętości dysków"
+_WARN="UWAGA"
+_ICON_OK="OK ikona i kolor"
+_ICON="Ikona"
+_COLOR="Kolor"
+_ICON_COLORS="Kolory i Ikona"
+;;
+*)	
+_KERNEL="kernel"
+_PKGS="pkgs"
+_BIGGEST_PKGS="biggest packages"
+_CLICK_PKG_INFO="click pkgname for info"
+_PKGS_STATS="Package statistics"
+_QDIRPKG="QDirStat  (GUI)"
+_INSTALLED="installed"
+_DAYS_AGO="days"
+_YESTERDAY="yesterday"
+_TODAY="today"
+_UP_TO_DATE="System is up to date!"
+_CHECK_NOW="Check for updates now"
+_PENDING="Pending updates"
+_GO_TO_FORUM="Update announcement"
+_UPDATE_YAY="Update with <b>yay</b>"
+_UPDATE_PARU="Update with <b>paru</b>"
+_NO_AUR="(no AUR)"
+_UPDATE_PACMAN="Update with <b>pacman</b>"
+_UPDATE_PAMAC="Update with <b>Pamac</b> (gui)"
+_RENEW_KEYS="Renew PGP keys"
+_RANK_MIRROR="Rank mirrors"
+_MIRROR_RANKING="Mirror ranking"
+_DISCS="Discs"
+_DIR_SIZE_MONITOR="Directory size monitor"
+_LOGS="Logs  <small>/var/log/journal</small>"
+_VACUUM_LOGS="Vacuum Logs"
+_VACUUM_1DAY="Keep 1 day"
+_VACUUM_7DAYS="Keep 7 days"
+_VACUUM_200M="Keep 200M"
+_VACUUM_500M="Keep 500M"
+
+_PACMAN_CACHE="Pacman cache"
+_EMPTY_PACMAN_CACHE="Clean pacman cache"
+_TRASH="Trash Can"
+_OPEN="Open"
+_EMPTY="Empty"
+
+_QDIRSTAT="QDirStat (directory statistics)"
+
+_SETTINGS="Settings"
+_SHOW_BIGGEST="Show biggest pkgs list"
+_HOW_MANY="How many?"
+_DISABLED="disabled"
+_DU_ALERT_LEVEL="Disk usage alert level"
+_WARN="WARNING"
+_ICON_OK="OK icon and color"
+_ICON="Icon"
+_COLOR="Color"
+_ICON_COLORS="Colors and Icon"
+;;
+esac
+    tint2-send refresh-execp mb-status-ce 2>/dev/null || true
+    [[ "${1:-}" == "settings" ]] && option="--checkout=settings" || option=""
+    init_conf
+
+    out=(); out2=(); out3=()
+
+    # submenu helpers: sub <tag> <title>; info <lines>; opt <label> <cmd text> <action...>
+    sub() { out2+=("^tag($1)" "^sep($2)"); }
+    info() { local l; for l in "$@"; do out2+=("^sep(<small><i>$l</i></small>)"); done; }
+    opt() { out2+=("$1  <small>$2</small>,^term($SELF run ${*:3})"); }
+    bad() { out2+=("<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> $1 </span>  <small>$2</small>,^term($SELF run ${*:3})"); }
+    # item <label> <right text> <tag>
+    item() {
+        local g=""
+        case $3 in
+            journal) g=$'\U000F0219' ;;
+            paccache) g=$'\U000F03D6' ;;
+            orphans) g=$'\U000F02A0' ;;
+            aur) g=$'\uF303' ;;
+            cache) g=$'\U000F02E9' ;;
+            trash) g=$'\U000F01B4' ;;
+            dev) g=$'\U000F0174' ;;
+            containers) g=$'\U000F0868' ;;
+            leftover) g=$'\U000F086F' ;;
+        esac
+        out+=("\"\"\"<big>$g</big>   $1 	$2\"\"\",^checkout($3)")
+    }
+
+    # snapd counts only when its socket is up: the snap binary ships with manjaro-tools-iso-git
+    app_updates() {
+        app_row() { # app glyph
+            local cb v
+            if app_update_on "$1"; then cb=$cbon; v=n; else cb=$cboff; v=y; fi
+            out+=("<big>$2</big>   Update <b>$1</b>   <big>$cb</big>,mb-setvar update_$1=$v $CE_CONF;$SELF menu ipc")
+        }
+        app_usable flatpak && app_row flatpak 
+        app_usable snap && app_row snap 
+    }
+
+    # with a ticked flatpak/snap box the system update also runs those
+    sys_update() { # label mb-cli-command mode
+        if ((APP_UPD)); then
+            out+=("$1,^term($SELF run sysupdate $3)")
+        else
+            out+=("$1,mb-cli $2")
+        fi
+    }
+
+PKGS=$(pacman -Qq 2>/dev/null | wc -l)
+# kernel version
+KERN="${KERN:-$(uname -sr | awk '{print $2}')}"
+KERN="${KERN/-*/}"
+#KERN="${KERN/linux/}"
+#KERN="${KERN,,}"
+
+if hash cachyos-kernel-manager 2>/dev/null;then
+    out+=("^sep(<b>Mabox</b> CachyOS <small><i>$(lsb_release -rs)</i></small>)")
+    out+=("<big></big>   $_KERNEL:	<b>${KERN}</b>,cachyos-kernel-manager")
+elif hash manjaro-settings-manager 2>/dev/null;
+then
+    out+=("^sep(<b>Mabox</b> Linux <b>$(lsb_release -rs)</b> <small><i>$(lsb_release -cs)</i></small>)")
+    out+=("<big></big>   $_KERNEL:	<b>${KERN}</b>,manjaro-settings-manager -m msm_kernel")
+else
+    out+=("^sep(<b>Mabox</b> Linux <b>$(lsb_release -rs)</b> <small><i>$(lsb_release -cs)</i></small>)")
+    out+=("<big></big>   $_KERNEL:	<b>${KERN}</b>,")
+fi
+## Biggest PKGS
+if hash expac 2>/dev/null && [[ "${big_pkgs}" -gt 0 ]];then
+	out+=("<big></big>   $_PKGS:	<b>$PKGS</b>,^checkout(pkgs)")
+	out2+=("^tag(pkgs)")
+	out2+=("^sep(${big_pkgs} $_BIGGEST_PKGS)")
+	out2+=("^sep(<i>$_CLICK_PKG_INFO</i>)")
+	count=0
+	while IFS=' ' read -r pkgname size rest
+	do
+		((count++))
+		out2+=("$(printf '<small>%2s.</small>' $count) $pkgname	$size M,mb-cli pkginfo $pkgname")
+	done< <(expac -H M '%-20n %10m' | sort -rhk 2 | head -n "${big_pkgs}")
+    out2+=("^sep($_PKGS_STATS)")
+    out2+=("<big></big>   <small>yay -Ps</small>,mb-cli stats")
+    if hash qdirstat 2>/dev/null;then 
+    out2+=("<big>󰀻</big>   $_QDIRPKG,qdirstat pkg:/")
+    fi
+else
+out+=("<big></big>   $_PKGS:	<b>$PKGS</b>,mb-cli stats")
+fi
+if [[ "$DIFF" -gt "1" ]];then
+DAGO="<b>$DIFF</b> ${_DAYS_AGO}"
+elif [[ "$DIFF" = "1" ]];then
+DAGO="<b>$_YESTERDAY</b>"
+else
+DAGO="<b>$_TODAY</b>"
+fi
+
+if hash calamares 2>/dev/null ;then
+:
+else
+out+=("<big></big>   $_INSTALLED: <small>$INSTDATE</small>	$DAGO,mcc")
+fi
+
+if [[ "${upkgs}" == 0 ]];then
+out+=("^sep(<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span> <small><i>$_UP_TO_DATE</i></small>)") 
+out+=("<big>󰦛</big>   $_CHECK_NOW,checkupdates.sh -p;$SELF run appcheck")
+app_updates
+out+=("^sep()")
+    if hash pacman-mirrors 2>/dev/null;then
+    out+=("$_RANK_MIRROR,^checkout(mirrors)")
+    out+=("^sep()")
+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring manjaro-keyring mabox-keyring;read -rsn1 -p Done)")
+    out2+=("^tag(mirrors)")
+    out2+=("^sep($_MIRROR_RANKING)")
+    out2+=("Fasttrack       <small>pacman-mirrors -f5</small>,mb-cli mirrors")
+    out2+=("All         <small>pacman-mirrors -i -c all</small>,mb-cli mirrors_all")
+    elif hash cachyos-kernel-manager 2>/dev/null;then
+    out+=("$_RANK_MIRROR,^term(sudo cachyos-rate-mirrors)")
+    out+=("^sep()")
+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring cachyos-keyring mabox-keyring;read -rsn1 -p Done)")
+    
+    else
+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring mabox-keyring;read -rsn1 -p Done)")
+    
+    fi
+fi
+if [[ "${upkgs}" != 0 ]];then
+out+=("^sep(<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯  <i>$_PENDING:</i> ${upkgs} </span>)")
+out+=("^sep(<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> repo: ${REPO} AUR: ${AUR}${APPS} </span>)")
+
+if hash pacman-mirrors 2>/dev/null;then
+if [[ "${updates}" -gt 10 ]];then
+out+=("$_GO_TO_FORUM: <b>Mabox</b> forum, xdg-open https://forum.maboxlinux.org/c/news-development/updates/25" "$_GO_TO_FORUM: <b>Manjaro</b> forum,xdg-open https://forum.manjaro.org/c/announcements/stable-updates/" "^sep()")
+fi
+fi
+
+APP_UPD=0
+{ app_usable flatpak && app_update_on flatpak; } && APP_UPD=1
+{ app_usable snap && app_update_on snap; } && APP_UPD=1
+
+if hash paru 2>/dev/null;then
+sys_update "$_UPDATE_PARU $_NO_AUR" update-noaur paru-noaur
+sys_update "$_UPDATE_PARU" update paru
+elif hash yay 2>/dev/null;then
+sys_update "$_UPDATE_YAY $_NO_AUR" update-noaur yay-noaur
+sys_update "$_UPDATE_YAY" update yay
+fi
+sys_update "$_UPDATE_PACMAN" pacupdate pacman
+app_updates
+out+=("^sep()")
+#out+=("^sep()")
+#out+=("$_UPDATE_PAMAC,pamac-manager --updates")
+    if hash pacman-mirrors 2>/dev/null;then
+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring manjaro-keyring mabox-keyring;read -rsn1 -p Done)")
+    out+=("^sep(<small><i>$_MIRROR_RANKING</i></small>)")
+    out+=("Fasttrack    <small>pacman-mirrors -f5</small>,mb-cli mirrors")
+    out+=("All  <small>pacman-mirrors -i -c all</small>,mb-cli mirrors_all")
+    elif hash cachyos-kernel-manager 2>/dev/null;then
+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring cachyos-keyring mabox-keyring;read -rsn1 -p Done)")
+    out+=("^sep()")
+    out+=("$_RANK_MIRROR,^term(sudo cachyos-rate-mirrors)")
+    else
+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring mabox-keyring;read -rsn1 -p Done)")
+    fi
+fi
+
+
+    ## DISCS
+    local qdir=""
+    hash qdirstat 2>/dev/null && qdir=" -q"
+    if [[ "${disk_limit}" -gt 0 ]]; then
+        out+=("^sep(Discs)")
+        if hash btrfs-assistant-launcher 2>/dev/null; then
+            out+=("<b>Btrfs</b> Assistant,btrfs-assistant-launcher" "^sep()")
+        fi
+        local mpoint="" DEVICE SIZE USED FREE PERCENT MOUNT MOUNTLBL ICON
+        while read -r DEVICE SIZE USED FREE PERCENT MOUNT; do
+            [[ "${#MOUNT}" -gt 10 ]] && MOUNTLBL=${MOUNT##*/} || MOUNTLBL=${MOUNT}
+            [[ "${#MOUNTLBL}" -gt 10 ]] && MOUNTLBL=${MOUNTLBL:0:12}
+            [[ "${MOUNT}" = *"media"* ]] && ICON="<big>󱊟</big>" || ICON="<big>󰋊</big>"
+            if [[ "${PERCENT::-1}" -ge "${disk_limit}" ]]; then
+                PERCENT="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${PERCENT} </span>"
+            else
+                PERCENT="<span> ${PERCENT} </span>"
+            fi
+            [[ "$DEVICE" == "$mpoint" ]] && continue
+            out+=("$ICON  $MOUNTLBL  	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
+            mpoint="${DEVICE}"
+        done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
+    fi
+
+    ## CLEANUP
+    local jb pb aurb cb sb tb thb nor leftn ob
+    jb=$(journal_bytes)
+    pb=$(bytes_of /var/cache/pacman/pkg)
+    mapfile -t PK < <(orphans)
+    nor=${#PK[@]}
+    tb=$(bytes_of "$CE_TRASH")
+    cb=$(bytes_of "$CE_CACHE")
+    # shellcheck disable=SC2046
+    sb=$(stale_bytes "$CE_CACHE" "$(conf_days cache_days 30)" $(conf_get cache_ignore ""))
+    thb=$(bytes_of "$CE_CACHE/thumbnails")
+
+    out+=("^sep(Cleanup)")
+    item "Journal logs" "$(size_span "$jb")" journal
+    sub journal "Journal logs"
+    info "Deletes logs beyond the limit." "Recent crash info stays."
+    opt "Keep 1 day" "journalctl --vacuum-time=1d" journal 1d
+    opt "Keep 7 days" "journalctl --vacuum-time=7d" journal 7d
+    opt "Keep 200M" "journalctl --vacuum-size=200M" journal 200M
+    opt "Keep 500M" "journalctl --vacuum-size=500M" journal 500M
+
+    item "Pacman cache" "$(size_span "$pb")" paccache
+    sub paccache "Pacman cache"
+    info "Keep 1-2 versions: rolling updates" "sometimes need a downgrade."
+    opt "Keep 3 versions" "paccache -rk3" paccache k3
+    opt "Keep 1 version" "paccache -rk1" paccache k1
+    opt "Uninstalled packages" "paccache -ruk0" paccache uninstalled
+    bad "Remove everything" "pacman -Scc" paccache all
+
+    if ((nor == 0)); then
+        item "Orphan packages" "<span fgcolor='${OK_FGCOLOR}'>   </span>" orphans
+    else
+        ob=$(orphan_bytes "${PK[@]}")
+        [[ -n $ob ]] && ob=$(human "$ob") || ob="$nor pkgs"
+        item "Orphan packages" "<span> $ob </span>" orphans
+    fi
+    sub orphans "Orphan packages"
+    if ((nor == 0)); then
+        info "None found."
+    else
+        local more=""
+        ((nor > 3)) && more=" ..."
+        info "$(cut -c1-35 <<<"$nor pkgs: ${PK[*]:0:3}$more")" "Size incl. unused deps (-Rs)"
+    fi
+    opt "Review list" "pacman -Qi" orphans review
+    opt "Remove (keep configs)" "pacman -R" orphans R
+    opt "Remove with unused deps" "pacman -Rs" orphans Rs
+    opt "Back up configs then remove" "pacman -Rns" orphans backup
+    bad "Remove with deps and configs" "pacman -Rns" orphans Rns
+    if hash notify-send.sh 2>/dev/null; then
+        if [[ $(conf_get notify_orphans n) == y ]]; then
+            out2+=("<big>${cbon}</big>   Notify about orphans,mb-setvar notify_orphans=n $CE_CONF;$SELF menu ipc")
+        else
+            out2+=("<big>${cboff}</big>   Notify about orphans,mb-setvar notify_orphans=y $CE_CONF;$SELF run orphancheck;$SELF menu ipc")
+        fi
+    fi
+
+    local aurs=()
+    hash paru 2>/dev/null && aurs+=(paru)
+    hash yay 2>/dev/null && aurs+=(yay)
+    hash pamac 2>/dev/null && aurs+=(pamac)
+    if ((${#aurs[@]})); then
+        aurb=$(bytes_of "$CE_CACHE/paru" "$CE_CACHE/yay")
+        item "AUR helper cache" "$(size_span "$aurb")" aur
+        sub aur "AUR helper cache"
+        info "Downloaded sources and build files."
+        hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
+        hash yay 2>/dev/null && opt "yay" "yay -Sc --aur" aur yay
+        hash pamac 2>/dev/null && opt "pamac" "pamac clean -b" aur pamac
+    fi
+
+    item "Thumbnails / .cache" "$(size_span "$sb")" cache
+    sub cache "Thumbnails / .cache"
+    info "Size shown = stale files only." "Whole .cache: $(human "$cb")" "Ignore list: Settings menu"
+    opt "Old thumbnails" "older than $(conf_days thumb_days 14) days" thumbs
+    opt "All thumbnails ($(human "$thb"))" "find ... -delete" thumbs all
+    opt "Stale files in .cache" "untouched $(conf_days cache_days 30) days" cache
+
+    sub trash "Trash"
+    out2+=("Open Trash,pcmanfm trash://")
+    bad "Empty Trash" "find ... -delete" trash
+
+    local dev=()
+    hash go 2>/dev/null && dev+=(go)
+    hash npm 2>/dev/null && dev+=(npm)
+    hash cargo-cache 2>/dev/null && dev+=(cargo)
+    hash pip 2>/dev/null && dev+=(pip)
+    hash yarn 2>/dev/null && dev+=(yarn)
+    hash pnpm 2>/dev/null && dev+=(pnpm)
+    if ((${#dev[@]})); then
+        item "Developer caches" "" dev
+        sub dev "Developer caches"
+        info "Tools refetch or rebuild it."
+        hash go 2>/dev/null && opt "Go build cache" "go clean -cache" dev go
+        hash npm 2>/dev/null && opt "npm verify" "npm cache verify" dev npm-verify
+        hash npm 2>/dev/null && opt "npm clean" "npm cache clean --force" dev npm
+        hash cargo-cache 2>/dev/null && opt "cargo" "cargo cache --autoclean" dev cargo
+        hash pip 2>/dev/null && opt "pip" "pip cache purge" dev pip
+        hash yarn 2>/dev/null && opt "yarn" "yarn cache clean" dev yarn
+        hash pnpm 2>/dev/null && opt "pnpm" "pnpm store prune" dev pnpm
+        hash go 2>/dev/null && bad "Go module cache" "go clean -modcache" dev gomod
+    fi
+
+    local cont=()
+    hash docker 2>/dev/null && cont+=(docker)
+    hash flatpak 2>/dev/null && cont+=(flatpak)
+    hash snap 2>/dev/null && cont+=(snap)
+    if ((${#cont[@]})); then
+        item "Containers" "" containers
+        sub containers "Containers"
+        info "Unused images and runtimes." "Old snap revisions."
+        hash docker 2>/dev/null && opt "docker" "system prune" containers docker
+        hash flatpak 2>/dev/null && opt "flatpak" "uninstall --unused" containers flatpak
+        hash snap 2>/dev/null && opt "snap" "remove old revisions" containers snap
+    fi
+
+    if hash pacdiff 2>/dev/null; then
+        leftn=$(pacdiff -o 2>/dev/null | wc -l)
+        item "Leftover configs" "<span> ${leftn} </span>" leftover
+        sub leftover ".pacnew / .pacsave files"
+        info "Per file: keep / merge / skip."
+        opt "List files" "pacdiff -o" leftover list
+        hash meld 2>/dev/null && opt "Review and merge" "pacdiff + meld" leftover merge
+    fi
+
+    ## DIR SIZE MONITOR
+    if [[ "${dir_size_monitor}" == "y" ]]; then
+        local down downb
+        down=$(xdg-user-dir DOWNLOAD)
+        downb=$(bytes_of "$down")
+        out+=("^sep(Directory size monitor)")
+        item "Logs  <small>/var/log/journal</small>" "$(size_span "$jb")" journal
+        item "Pacman cache" "$(size_span "$pb")" paccache
+        item "Trash Can" "$(size_span "$tb")" trash
+        out+=("\"\"\"$(basename "$down")	$(size_span "$downb")\"\"\",^pipe(jgbrowser $down$qdir)")
+    fi
+
+    ## SETTINGS
+out+=("^sep()")
+out+=("  $_SETTINGS,^checkout(settings)")
+out2+=("^tag(settings)")
+out2+=("^sep($_SETTINGS)")
+[[ "$1" == "settings" ]] && out2+=("${arrow_string_left} ${arrow_string_left} ${arrow_string_left},^back()" "^sep()")
+# BIG PKGS
+if hash expac 2>/dev/null;then
+[[ "${big_pkgs}" -gt "0" ]] && out2+=("<big>${cbon}</big>   $_SHOW_BIGGEST,^checkout(biggest)") || out2+=("<big>${cboff}</big>   $_SHOW_BIGGEST,^checkout(biggest)")
+out3+=("^tag(biggest)")
+out3+=("^sep($_HOW_MANY)")
+[[ "${big_pkgs}" == "0" ]] && out3+=("<big>${ron}</big>   0 ($_DISABLED),mb-setvar big_pkgs=0;$SELF menu ipc") || out3+=("<big>${roff}</big>   0 ($_DISABLED),mb-setvar big_pkgs=0;$SELF menu ipc")
+out3+=("^sep()")
+[[ "${big_pkgs}" == "10" ]] && out3+=("<big>${ron}</big>   10,mb-setvar big_pkgs=10;$SELF menu ipc") || out3+=("<big>${roff}</big>   10,mb-setvar big_pkgs=10;$SELF menu ipc")
+[[ "${big_pkgs}" == "20" ]] && out3+=("<big>${ron}</big>   20,mb-setvar big_pkgs=20;$SELF menu ipc") || out3+=("<big>${roff}</big>   20,mb-setvar big_pkgs=20;$SELF menu ipc")
+[[ "${big_pkgs}" == "30" ]] && out3+=("<big>${ron}</big>   30,mb-setvar big_pkgs=30;$SELF menu ipc") || out3+=("<big>${roff}</big>   30,mb-setvar big_pkgs=30;$SELF menu ipc")
+[[ "${big_pkgs}" == "40" ]] && out3+=("<big>${ron}</big>   40,mb-setvar big_pkgs=40;$SELF menu ipc") || out3+=("<big>${roff}</big>   40,mb-setvar big_pkgs=40;$SELF menu ipc")
+fi
+
+out2+=("^sep($_DU_ALERT_LEVEL)")
+[[ "$disk_limit" == "0" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 0 ($_DISABLED) </span>,mb-setvar disk_limit=0;$SELF menu settings") || out2+=("<big>${roff}</big>    0 ($_DISABLED),mb-setvar disk_limit=0;$SELF menu settings")
+[[ "$disk_limit" == "75" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 75% </span>,mb-setvar disk_limit=75;$SELF menu settings") || out2+=("<big>${roff}</big>    75%,mb-setvar disk_limit=75;$SELF menu settings")
+[[ "$disk_limit" == "80" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 80% </span>,mb-setvar disk_limit=80;$SELF menu settings") || out2+=("<big>${roff}</big>    80%,mb-setvar disk_limit=80;$SELF menu settings")
+[[ "$disk_limit" == "85" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 85% </span>,mb-setvar disk_limit=85;$SELF menu settings") || out2+=("<big>${roff}</big>    85%,mb-setvar disk_limit=85;$SELF menu settings")
+[[ "$disk_limit" == "90" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 90% </span>,mb-setvar disk_limit=90;$SELF menu settings") || out2+=("<big>${roff}</big>    90%,mb-setvar disk_limit=90;$SELF menu settings")
+[[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;$SELF menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;$SELF menu settings")
+out2+=("^sep($_DIR_SIZE_MONITOR)")
+[[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;$SELF menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;$SELF menu settings")
+out2+=("^sep($_ICON_COLORS)")
+icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
+out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
+out3+=("^tag(icon)")
+out3+=("^sep($_ICON)")
+for i in "${icons[@]}";do
+[[ "${OK_ICON}" == "${i}" ]] && out3+=("<big>${ron}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>") || out3+=("<big>${roff}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>,mb-setvar ok_icon=${i};$SELF menu settings")
+done
+okcols=("#EEEEEE" "#CCCCCC" "#AAAAAA" "#222222" "#a4c400" "#60a917" "#288C44" "#008a00" "#00aba9" "#1ba1e2" "#3e65ff" "#f472d0")
+warncols=("#d80073" "#a20025" "#e51400" "#fa6800" "#f0a30a" "#e3c800")
+#out2+=("<span bgcolor='$OK_FGCOLOR'>       </span>   $_COLOR_OK,^checkout(colok)")
+#out3+=("^tag(colok)")
+out3+=("^sep($_COLOR)")
+for i in "${okcols[@]}";do
+[[ "${OK_FGCOLOR}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>        </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>        </span>,mb-setvar ok_fgcolor=${i};$SELF menu settings")
+done
+out2+=("<span bgcolor='$WARN_BGCOLOR' fgcolor='$WARN_FGCOLOR'> $_WARN </span>,^checkout(colwarn)")
+out3+=("^tag(colwarn)")
+out3+=("^sep($_WARN)")
+[[ "${WARN_BGCOLOR}" == "#bd1e24" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#bd1e24' fgcolor='#FFFFFF'> warning </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#bd1e24' fgcolor='#FFFFFF'> warning </span>,mb-setvar warn_bgcolor='#bd1e24' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
+[[ "${WARN_BGCOLOR}" == "#e91e63" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#e91e63' fgcolor='#FFFFFF'> pink </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#e91e63' fgcolor='#FFFFFF'> pink </span>,mb-setvar warn_bgcolor='#e91e63' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
+[[ "${WARN_BGCOLOR}" == "#ff5722" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#ff5722' fgcolor='#FFFFFF'> deep orange </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#ff5722' fgcolor='#FFFFFF'> deep orange </span>,mb-setvar warn_bgcolor='#ff5722' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
+[[ "${WARN_BGCOLOR}" == "#ff9800" && "${WARN_FGCOLOR}" == "#000000" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#ff9800' fgcolor='#000000'> orange </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#ff9800' fgcolor='#000000'> orange </span>,mb-setvar warn_bgcolor='#ff9800' ${CONF_FILE};mb-setvar warn_fgcolor='#000000' ${CONF_FILE};$SELF menu settings")
+[[ "${WARN_BGCOLOR}" == "#f6c700" && "${WARN_FGCOLOR}" == "#000000" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#f6c700' fgcolor='#000000'> yellow </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#f6c700' fgcolor='#000000'> yellow </span>,mb-setvar warn_bgcolor='#f6c700' ${CONF_FILE};mb-setvar warn_fgcolor='#000000' ${CONF_FILE};$SELF menu settings")
+[[ "${WARN_BGCOLOR}" == "#000000" && "${WARN_FGCOLOR}" == "#FFFFFF" ]] && out3+=("<big>${ron}</big>   <span bgcolor='#000000' fgcolor='#FFFFFF'> black </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='#000000' fgcolor='#FFFFFF'> black </span>,mb-setvar warn_bgcolor='#000000' ${CONF_FILE};mb-setvar warn_fgcolor='#FFFFFF' ${CONF_FILE};$SELF menu settings")
+#for i in ${warncols[@]};do
+#[[ "${COLOR_WARN}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>      </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>      </span>,mb-setvar color_warn=${i} ${CONF_FILE};$SELF menu settings")
+#done
+
+out2+=("^sep(Cleanup)" "Edit cleanup config,xdg-open $CE_CONF")
+[[ "$1" == "settings" ]] && out2+=("^sep()" "${arrow_string_left} ${arrow_string_left} ${arrow_string_left},^back()")
+
+    MENU_PADDING_TOP=${jgtools_padding:-0}
+    POSITION_MODE="center"
+    MENU_HALIGN="center"
+    MENU_VALIGN="center"
+    [[ "${1:-}" == "ipc" || "${1:-}" == "settings" ]] && POSITION_MODE="ipc"
+    JGWIDTH=340
+    TABS=230
+    pidof picom >/dev/null && MENU_RADIUS=$jgtools_radius
+    [ -z "${jgmenu_use_borders:-}" ] && menu_border=0
+    icons=0
+    iconmargin=0
+    mkconfigfile
+    echo menu_height_mode=dynamic >> "${CONFIG_FILE}"
+
+    {
+        printf '%s\n' "${out[@]}"
+        printf '%s\n' "${out2[@]}"
+        printf '%s\n' "${out3[@]}"
+    } > "${MENU_ITEMS}"
+
+    jgmenu --config-file="${CONFIG_FILE}" --csv-file="${MENU_ITEMS}" ${option} 2>/dev/null
+}
+
+status() {
+    local dirty=0 DEVICE SIZE USED FREE PERCENT MOUNT msg
+    if [[ "${disk_limit}" -gt 0 ]]; then
+        while read -r DEVICE SIZE USED FREE PERCENT MOUNT; do
+            [[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && dirty=1
+        done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
+    fi
+    [[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
+    [[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
+    echo "${msg}"
+}
+
+case "${1:-}" in
+    status) status ;;
+    left) left ;;
+    menu) menu "${2:-}" ;;
+esac

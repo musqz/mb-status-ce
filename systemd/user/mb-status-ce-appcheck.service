@@ -1,0 +1,9 @@
+[Unit]
+Description=mb-status-ce flatpak, snap and orphan check
+
+[Service]
+Type=oneshot
+# keep the notification's button listener alive after the check ends
+KillMode=process
+ExecStart=@BIN@ run appcheck
+ExecStart=@BIN@ run orphancheck
