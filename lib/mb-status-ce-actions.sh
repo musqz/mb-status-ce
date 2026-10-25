@@ -158,8 +158,8 @@ cache_days=30
 thumb_days=14
 # top-level names in ~/.cache that are never touched (space separated)
 cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status-ce fontconfig
-# folder with quickemu VMs (<name>.conf next to a <name>/ folder)
-vm_dir=~/emu
+# folders with quickemu VMs, comma separated (<name>.conf next to a <name>/ folder)
+qemu_dir=~/emu
 EOF
 }
 
@@ -524,35 +524,60 @@ docker_prunable() {
        -n $(timeout 3 docker images -qf dangling=true 2>/dev/null) ]]
 }
 
-vm_dir() {
-    local d
-    d=$(conf_get vm_dir "$HOME/emu")
-    d=${d/#\~/$HOME}
-    echo "${d/#\$HOME/$HOME}"
+# folders from qemu_dir (comma separated, ~ and $HOME expanded), in config order
+VMDIRS=()
+vm_load() {
+    local list part d parts
+    list=$(conf_get qemu_dir "$HOME/emu")
+    VMDIRS=()
+    IFS=, read -ra parts <<<"$list"
+    for part in "${parts[@]}"; do
+        d=${part#"${part%%[![:space:]]*}"}; d=${d%"${d##*[![:space:]]}"}
+        d=${d/#\~/$HOME}; d=${d/#\$HOME/$HOME}; d=${d%/}
+        [[ -n $d && " ${VMDIRS[*]} " != *" $d "* ]] && VMDIRS+=("$d")
+    done
+    return 0
 }
 
-# quickemu VMs: <name>.conf next to a <name>/ folder; names that are unsafe in a command line are skipped
-vm_names() {
-    local d c n
-    d=${VMD:-$(vm_dir)}
-    for c in "$d"/*.conf; do
-        [[ -f $c ]] || continue
-        n=${c##*/}; n=${n%.conf}
-        [[ $n =~ ^[A-Za-z0-9][A-Za-z0-9._@+-]*$ && -d $d/$n && ! -L $d/$n ]] && echo "$n"
+vm_dirs_exist() { local d; for d in "${VMDIRS[@]}"; do [[ -d $d ]] && return 0; done; return 1; }
+
+# quickemu VMs as "<folder index>:<name>": <name>.conf next to a <name>/ folder;
+# names that are unsafe in a command line, and symlinks, are skipped
+vm_ids() {
+    local i d c n
+    for i in "${!VMDIRS[@]}"; do
+        d=${VMDIRS[i]}
+        for c in "$d"/*.conf; do
+            [[ -f $c ]] || continue
+            n=${c##*/}; n=${n%.conf}
+            [[ $n =~ ^[A-Za-z0-9][A-Za-z0-9._@+-]*$ && -d $d/$n && ! -L $d/$n ]] && echo "$i:$n"
+        done
     done
 }
 
-vm_size() { local d=${VMD:-$(vm_dir)}; bytes_of "$d/$1" "$d/$1.conf"; }
+vm_path() { echo "${VMDIRS[${1%%:*}]}/${1#*:}"; } # id -> folder; the .conf is "$(vm_path id).conf"
+
+vm_label() { # name, plus its folder when several are configured
+    local n=${1#*:} d
+    if ((${#VMDIRS[@]} > 1)); then
+        d=${VMDIRS[${1%%:*}]}
+        echo "$n  <small>(${d/#$HOME/\~})</small>"
+    else
+        echo "$n"
+    fi
+}
+
+vm_size() { local p; p=$(vm_path "$1"); bytes_of "$p" "$p.conf"; }
 
 vm_date() { # last change of the disk, else of the folder
-    local d=${VMD:-$(vm_dir)} f; f="$d/$1/disk.qcow2"
-    [[ -f $f ]] || f="$d/$1"
+    local f; f="$(vm_path "$1")/disk.qcow2"
+    [[ -f $f ]] || f=$(vm_path "$1")
     date -r "$f" +%F
 }
 
 vm_running() { # quickemu keeps the qemu pid in <name>/<name>.pid
     local pid
-    pid=$(cat "${VMD:-$(vm_dir)}/$1/$1.pid" 2>/dev/null) || return 1
+    pid=$(cat "$(vm_path "$1")/${1#*:}.pid" 2>/dev/null) || return 1
     [[ $pid =~ ^[0-9]+$ && $(cat "/proc/$pid/comm" 2>/dev/null) == qemu* ]]
 }
 
@@ -619,18 +644,18 @@ act_leftover() {
 }
 
 act_vm() {
-    local d n=${1:-} v known=() ok=0
-    d=$(vm_dir); VMD=$d
-    mapfile -t known < <(vm_names)
-    for v in "${known[@]}"; do [[ $v == "$n" ]] && ok=1; done
-    ((ok)) || { echo "$_A_VM_UNKNOWN $n"; pause; return 0; }
-    if vm_running "$n"; then echo "${red}$n $_A_VM_RUNNING${rst}"; pause; return 0; fi
-    TITLE="$_A_VM $n"
+    local id=${1:-} v ok=0 p
+    vm_load
+    while read -r v; do [[ $v == "$id" ]] && ok=1; done < <(vm_ids)
+    ((ok)) || { echo "$_A_VM_UNKNOWN $id"; pause; return 0; }
+    p=$(vm_path "$id")
+    if vm_running "$id"; then echo "${red}${id#*:} $_A_VM_RUNNING${rst}"; pause; return 0; fi
+    TITLE="$_A_VM ${id#*:}"
     INFO="$_A_VM_INFO"
     DANGER=1
-    CMD=(rm -rf -- "$d/$n" "$d/$n.conf")
-    DRY=(ls -la -- "$d/$n")
-    MEASURE=("$d/$n" "$d/$n.conf")
+    CMD=(rm -rf -- "$p" "$p.conf")
+    DRY=(ls -la -- "$p")
+    MEASURE=("$p" "$p.conf")
     flow
 }
 

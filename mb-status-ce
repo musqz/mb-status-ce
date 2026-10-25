@@ -604,10 +604,10 @@ fi
             done
         fi
 
-        local vmd vmn=() vml=() vmtot=0
-        VMD=$(vm_dir); vmd=$VMD
-        mapfile -t vmn < <(vm_names)
-        if ((${#vmn[@]})) || { ((!DYNAMIC)) && [[ -d $vmd ]]; }; then
+        local vmn=() vml=() vmtot=0
+        vm_load
+        mapfile -t vmn < <(vm_ids)
+        if ((${#vmn[@]})) || { ((!DYNAMIC)) && vm_dirs_exist; }; then
             for v in "${vmn[@]}"; do
                 vmb=$(vm_size "$v")
                 vmtot=$((vmtot + vmb))
@@ -618,7 +618,7 @@ fi
             info "$_VM_INFO"
             if ((${#vml[@]})); then
                 while read -r vmb v; do
-                    opt "$v" "$(human "$vmb")  $(vm_date "$v")" vm "$v"
+                    opt "$(vm_label "$v")" "$(human "$vmb")  $(vm_date "$v")" vm "$v"
                 done < <(printf '%s\n' "${vml[@]}" | sort -rn)
             else
                 info "$_NONE_FOUND"
