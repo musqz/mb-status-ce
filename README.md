@@ -40,6 +40,10 @@ Orphan packages, *Back up configs then remove*:
 
 ![mb-status-ce orphans backup](docs/orphans-backup.png)
 
+Thumbnails / .cache: old thumbnails, all thumbnails, or stale files in `~/.cache`:
+
+![mb-status-ce thumbnails and cache](docs/thumbnails.png)
+
 Virtual machines: quickemu VMs from the `qemu_dir` folders (default `~/emu`), grouped by folder, with size and last change per VM:
 
 ![mb-status-ce virtual machines](docs/vm-menu.png)
