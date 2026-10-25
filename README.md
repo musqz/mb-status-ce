@@ -27,7 +27,7 @@ Slim menu with the Directory size monitor off, and the Settings submenu:
 
 Entries for tools that are not installed are hidden:
 
-- AUR helper cache: needs `paru`, `yay` or `pamac`.
+- AUR helper cache: needs `paru`, `yay` or `pamac`. *Choose packages to remove* also needs `fzf`.
 - Developer caches: only `go`, `npm`, `cargo-cache`, `pip`, `yarn`, `pnpm` that exist.
 - Containers: only `docker`, `flatpak`, `snap` that exist.
 - Virtual machines: needs a `qemu_dir` folder with quickemu VMs.
