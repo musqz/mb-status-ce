@@ -10,7 +10,7 @@ STOCK=${STOCK:-/usr/bin/mb-status}
 
 rm -rf "$OUT/usr" "$OUT/mb-status.diff"
 mkdir -p "$OUT/usr/bin" "$OUT/usr/share/mb-status"
-sed -e 's/^# mb-status-ce: .*/# mb-status: updates, disk space and cleanup (jgmenu)/' -e 's/mb-status-ce/mb-status/g' "$SRC/mb-status-ce" > "$OUT/usr/bin/mb-status"
+sed -e '1s|.*|#!/bin/bash|' -e 's/\$SELF menu /mb-status menu /g' -e 's/mb-status-ce/mb-status/g' "$SRC/mb-status-ce" > "$OUT/usr/bin/mb-status"
 sed 's/mb-status-ce/mb-status/g' "$SRC/lib/mb-status-ce-actions.sh" > "$OUT/usr/share/mb-status/mb-status-actions.sh"
 chmod 755 "$OUT/usr/bin/mb-status"
 bash -n "$OUT/usr/bin/mb-status"

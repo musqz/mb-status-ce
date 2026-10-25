@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC2034,SC2154  # variables are shared with jgtools.inc
-# mb-status-ce: mb-status with a cleanup section (jgmenu)
+# mb-status 󰳈 󰻌  󰂪 󰮯 : updates, disk space, dir sizes
+# TODO: additional configurable dirs to monitor
+# TODO: own commands below updates
+# TODO: own commands at bottom
+
 # usage: mb-status-ce status | left | menu [ipc|settings] | run <action> [mode]
 
 SELF=$(readlink -f "$0")
 for LIBDIR in "${SELF%/*}/lib" "${SELF%/*}/../share/mb-status-ce" "$HOME/.local/share/mb-status-ce" /usr/share/mb-status-ce; do
     [[ -f $LIBDIR/mb-status-ce-actions.sh ]] && break
 done
-# shellcheck source=lib/mb-status-ce-actions.sh
 . "$LIBDIR/mb-status-ce-actions.sh"
 
 if [[ "${1:-}" == run ]]; then
@@ -18,27 +20,33 @@ if [[ "${1:-}" == run ]]; then
     exit 0
 fi
 
+CFGDIR="$HOME/.config/mabox"
 UPDATES_LIST="/tmp/updates/updates_list"
 AUR_UPDATES_LIST="/tmp/updates/aur_updates_list"
 mkdir -p /tmp/updates
-for f in "$UPDATES_LIST" "$AUR_UPDATES_LIST"; do
-    if [[ ! -f "$f" ]]; then
-        touch "$f"
-        chmod 666 "$f"
-    fi
-done
+if [[ ! -f "$UPDATES_LIST" ]];then
+touch "$UPDATES_LIST"
+chmod 666 "${UPDATES_LIST}"
+fi
+if [[ ! -f "$AUR_UPDATES_LIST" ]]; then
+touch "$AUR_UPDATES_LIST"
+chmod 666 "$AUR_UPDATES_LIST"
+fi
 
-. "$HOME/.config/mabox/mabox.conf"
+# all config values stored here!!!
 
-if [ -z "${disk_limit+x}" ]; then
-    mb-setvar disk_limit=90
-    mb-setvar big_pkgs=0
-    mb-setvar ok_icon=󰞑
-    mb-setvar ok_fgcolor='#008000'
-    mb-setvar warn_fgcolor='#FFFFFF'
-    mb-setvar warn_bgcolor='#ff5722'
-    mb-setvar dir_size_monitor=y
-    . "$HOME/.config/mabox/mabox.conf"
+. $HOME/.config/mabox/mabox.conf
+
+if [ -z ${disk_limit+x} ]; then 
+mb-setvar disk_limit=90
+mb-setvar big_pkgs=0
+mb-setvar ok_icon=󰞑
+mb-setvar ok_fgcolor='#008000'
+mb-setvar warn_fgcolor='#FFFFFF'
+mb-setvar warn_bgcolor='#ff5722'
+mb-setvar dir_size_monitor=y
+
+. $HOME/.config/mabox/mabox.conf
 fi
 
 disk_limit=${disk_limit:-70}
@@ -50,12 +58,19 @@ OK_FGCOLOR=${ok_fgcolor:-"#008000"}
 WARN_FGCOLOR=${warn_fgcolor:-"#FFFFFF"}
 WARN_BGCOLOR=${warn_bgcolor:-"#bd1e24"}
 
+# install date
 INST=$(stat -c %W /)
-INSTDATE=$(stat -c %w / | awk '{print $1}')
-DIFF=$(( ($(date +%s) - INST) / 86400 ))
+INSTDATE=$(stat -c %w /|awk '{print $1}')
+TODAY=$(date +%s)
+DIFF=$(( (TODAY - INST) / 86400 ))
+if [[ "$DIFF" > "1" ]];then
+DAGO="(${DIFF} ${DAYS_AGO})"
+else
+DAGO=""
+fi
 
-REPO=$(wc -l < "$UPDATES_LIST")
-AUR=$(wc -l < "$AUR_UPDATES_LIST")
+REPO=$(wc -l $UPDATES_LIST | awk '{print $1}')
+AUR=$(wc -l $AUR_UPDATES_LIST | awk '{print $1}')
 FLATPAK=$(app_counted flatpak)
 SNAP=$(app_counted snap)
 upkgs=$((REPO + AUR + FLATPAK + SNAP))
@@ -63,7 +78,8 @@ APPS=""
 ((FLATPAK)) && APPS+=" flatpak: $FLATPAK"
 ((SNAP)) && APPS+=" snap: $SNAP"
 
-left() {
+
+left(){
     menu ipc
 }
 
@@ -80,8 +96,9 @@ size_span() {
     fi
 }
 
-menu() {
-    . /usr/share/mb-jgtools/jgtools.inc
+## MENU
+menu(){
+. /usr/share/mb-jgtools/jgtools.inc
 case $LANG in
 pl*)
 _KERNEL="jądro"
@@ -280,8 +297,8 @@ _CLEANUP="Cleanup"
 _EDIT_CLEANUP_CONF="Edit cleanup config"
 ;;
 esac
-    tint2-send refresh-execp mb-status-ce 2>/dev/null || true
-    [[ "${1:-}" == "settings" ]] && option="--checkout=settings" || option=""
+tint2-send refresh-execp mb-status-ce
+[[ "${1}" == "settings" ]] && option="--checkout=settings" || option=""
     init_conf
 
     out=(); out2=(); out3=()
@@ -445,29 +462,36 @@ out+=("^sep()")
 fi
 
 
-    ## DISCS
-    local qdir=""
-    hash qdirstat 2>/dev/null && qdir=" -q"
-    if [[ "${disk_limit}" -gt 0 ]]; then
-        out+=("^sep($_DISCS)")
-        if hash btrfs-assistant-launcher 2>/dev/null; then
-            out+=("<b>Btrfs</b> Assistant,btrfs-assistant-launcher" "^sep()")
-        fi
-        local mpoint="" DEVICE SIZE USED FREE PERCENT MOUNT MOUNTLBL ICON
-        while read -r DEVICE SIZE USED FREE PERCENT MOUNT; do
-            [[ "${#MOUNT}" -gt 10 ]] && MOUNTLBL=${MOUNT##*/} || MOUNTLBL=${MOUNT}
-            [[ "${#MOUNTLBL}" -gt 10 ]] && MOUNTLBL=${MOUNTLBL:0:12}
-            [[ "${MOUNT}" = *"media"* ]] && ICON="<big>󱊟</big>" || ICON="<big>󰋊</big>"
-            if [[ "${PERCENT::-1}" -ge "${disk_limit}" ]]; then
-                PERCENT="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${PERCENT} </span>"
-            else
-                PERCENT="<span> ${PERCENT} </span>"
-            fi
-            [[ "$DEVICE" == "$mpoint" ]] && continue
-            out+=("$ICON  $MOUNTLBL  	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
-            mpoint="${DEVICE}"
-        done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
+## DISCS
+if hash qdirstat 2>/dev/null;then 
+qdir=" -q" 
+else 
+qdir=""
+fi
+
+if [[ "${disk_limit}" -gt "0" ]];then
+	out+=("^sep($_DISCS)")
+    if hash btrfs-assistant-launcher 2>/dev/null;then
+    out+=("<b>Btrfs</b> Assistant,btrfs-assistant-launcher")
+    out+=("^sep()")
     fi
+    mpoint=""
+	while read DEVICE SIZE USED FREE PERCENT MOUNT
+	do
+	[[ "${#MOUNT}" -gt "10" ]] && MOUNTLBL=${MOUNT##*/} || MOUNTLBL=${MOUNT}
+	[[ "${#MOUNTLBL}" -gt "10" ]] && MOUNTLBL=${MOUNTLBL:0:12}
+	[[ "${MOUNT}" = *"media"* ]] && ICON="<big>󱊟</big>" || ICON="<big>󰋊</big>"
+
+	[[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && PERCENT="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${PERCENT} </span>" || PERCENT="<span> ${PERCENT} </span>"
+	if [[ "$DEVICE" == "$mpoint" ]];then
+    continue
+    else
+    #out+=("$ICON  $MOUNTLBL  <small>$DEVICE</small>	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
+    out+=("$ICON  $MOUNTLBL  	$PERCENT,^pipe(jgbrowser ${MOUNT}${qdir})")
+    mpoint="${DEVICE}"
+    fi
+	done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
+fi
 
     local jb pb aurb cb sb tb thb nor leftn ob hdr t v vmb
     ## DIR SIZE MONITOR: a row shows only when there is something to clean; hidden entirely when off
@@ -652,13 +676,11 @@ fi
         # no cleanup row left: the header becomes a plain separator above Downloads
         ((DYNAMIC && ${#out[@]} == hdr + 1)) && out[hdr]="^sep()"
 
-        local down downb
-        down=$(xdg-user-dir DOWNLOAD)
-        downb=$(bytes_of "$down")
-        out+=("\"\"\"$(basename "$down")	$(size_span "$downb")\"\"\",^pipe(jgbrowser $down$qdir)")
+        downsize=$(du -sh $(xdg-user-dir DOWNLOAD)|awk '{print $1}')
+        [[ "${downsize}" == *G* ]] && downsize="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${downsize} </span>" || downsize="<span> ${downsize} </span>"
+        out+=("\"\"\"$(basename $(xdg-user-dir DOWNLOAD))	${downsize}\"\"\",^pipe(jgbrowser $(xdg-user-dir DOWNLOAD)$qdir)")
     fi
 
-    ## SETTINGS
 out+=("^sep()")
 out+=("  $_SETTINGS,^checkout(settings)")
 out2+=("^tag(settings)")
@@ -692,7 +714,7 @@ icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
 out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
 out3+=("^tag(icon)")
 out3+=("^sep($_ICON)")
-for i in "${icons[@]}";do
+for i in ${icons[@]};do
 [[ "${OK_ICON}" == "${i}" ]] && out3+=("<big>${ron}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>") || out3+=("<big>${roff}  <span fgcolor='${OK_FGCOLOR}'>$i</span></big>,mb-setvar ok_icon=${i};$SELF menu settings")
 done
 okcols=("#EEEEEE" "#CCCCCC" "#AAAAAA" "#222222" "#a4c400" "#60a917" "#288C44" "#008a00" "#00aba9" "#1ba1e2" "#3e65ff" "#f472d0")
@@ -700,7 +722,7 @@ warncols=("#d80073" "#a20025" "#e51400" "#fa6800" "#f0a30a" "#e3c800")
 #out2+=("<span bgcolor='$OK_FGCOLOR'>       </span>   $_COLOR_OK,^checkout(colok)")
 #out3+=("^tag(colok)")
 out3+=("^sep($_COLOR)")
-for i in "${okcols[@]}";do
+for i in ${okcols[@]};do
 [[ "${OK_FGCOLOR}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>        </span>,$SELF menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>        </span>,mb-setvar ok_fgcolor=${i};$SELF menu settings")
 done
 out2+=("<span bgcolor='$WARN_BGCOLOR' fgcolor='$WARN_FGCOLOR'> $_WARN </span>,^checkout(colwarn)")
@@ -719,44 +741,70 @@ out3+=("^sep($_WARN)")
 out2+=("^sep($_CLEANUP)" "$_EDIT_CLEANUP_CONF,xdg-open $CE_CONF")
 [[ "$1" == "settings" ]] && out2+=("^sep()" "${arrow_string_left} ${arrow_string_left} ${arrow_string_left},^back()")
 
-    MENU_PADDING_TOP=${jgtools_padding:-0}
-    POSITION_MODE="center"
-    MENU_HALIGN="center"
-    MENU_VALIGN="center"
-    [[ "${1:-}" == "ipc" || "${1:-}" == "settings" ]] && POSITION_MODE="ipc"
-    JGWIDTH=340
-    TABS=230
-    pidof picom >/dev/null && MENU_RADIUS=$jgtools_radius
-    [ -z "${jgmenu_use_borders:-}" ] && menu_border=0
-    icons=0
-    iconmargin=0
-    mkconfigfile
-    echo menu_height_mode=dynamic >> "${CONFIG_FILE}"
 
-    {
-        printf '%s\n' "${out[@]}"
-        printf '%s\n' "${out2[@]}"
-        printf '%s\n' "${out3[@]}"
-    } > "${MENU_ITEMS}"
+#
 
-    jgmenu --config-file="${CONFIG_FILE}" --csv-file="${MENU_ITEMS}" ${option} 2>/dev/null
+MENU_PADDING_TOP=${jgtools_padding:-0}
+POSITION_MODE="center"
+MENU_HALIGN="center"
+MENU_VALIGN="center"
+[[ "${1}" == "ipc" ]] && POSITION_MODE="ipc"
+[[ "${1}" == "settings" ]] && POSITION_MODE="ipc"
+#notify-send.sh "Pos" "${POSITION_MODE}"
+JGWIDTH=340
+TABS=230
+[ $(pidof picom) ] && MENU_RADIUS=$jgtools_radius
+[ -z $jgmenu_use_borders ] && menu_border=0
+icons=0
+iconmargin=0
+mkconfigfile
+echo menu_height_mode=dynamic >> ${CONFIG_FILE}
+
+cat <<EOF > ${MENU_ITEMS}
+$(printf '%s\n' "${out[@]}")
+$(printf '%s\n' "${out2[@]}")
+$(printf '%s\n' "${out3[@]}")
+EOF
+
+jgmenu --config-file=${CONFIG_FILE} --csv-file=${MENU_ITEMS} ${option} 2>/dev/null
+}
+#dnotify(){
+#LINK="exo-open --launch WebBrowser maboxlinux.org/donate"
+#yad --width="400" --center --height="80" --window-icon="mbcc" --borders="10" --image="emote-love" --image-on-top --title "Request for Donation" \
+#--text-align="center" --text="<big>Donate to Mabox         </big>" \
+#--form --align="center" \
+#--field="Mabox needs your help... Donations fund":LBL \
+#--field="development and infrastructure":LBL \
+#--field="important for Mabox's continued existence.":LBL \
+#--button="Donate":"$LINK" --button="No Thanks":"0"
+#}
+#updates=99
+status(){
+#if [[ "$DIFF" -gt "1" ]];then
+#DDATE=$(date +%Y-%m-%d)
+#if [[ $((DIFF % 100)) == "0" ]] && [[ ! -f "$CFGDIR/.$DDATE" ]];then
+#touch "$CFGDIR/.$DDATE"
+#dnotify &>/dev/null
+#fi
+#fi
+
+#disk space
+dirty=0
+if [[ "${disk_limit}" -gt "0" ]];then
+	while read DEVICE SIZE USED FREE PERCENT MOUNT
+	do
+	[[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && dirty=1
+	done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
+fi
+[[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
+[[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
+echo "${msg}"
+app_refresh
 }
 
-status() {
-    local dirty=0 DEVICE SIZE USED FREE PERCENT MOUNT msg
-    if [[ "${disk_limit}" -gt 0 ]]; then
-        while read -r DEVICE SIZE USED FREE PERCENT MOUNT; do
-            [[ "${PERCENT::-1}" -ge "${disk_limit}" ]] && dirty=1
-        done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
-    fi
-    [[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
-    [[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
-    echo "${msg}"
-    app_refresh
-}
 
-case "${1:-}" in
-    status) status ;;
-    left) left ;;
-    menu) menu "${2:-}" ;;
+case "$1" in
+    status) status;;
+    left) left;;
+    menu) menu "$2";;
 esac
