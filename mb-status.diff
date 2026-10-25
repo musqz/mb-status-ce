@@ -234,7 +234,7 @@
      out+=("$_RANK_MIRROR,^checkout(mirrors)")
      out+=("^sep()")
 -    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring manjaro-keyring mabox-keyring;read -p "${FINISHED}"")
-+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring manjaro-keyring mabox-keyring;read -rsn1 -p Done)")
++    out+=("$_RENEW_KEYS,^term($SELF run keys)")
      out2+=("^tag(mirrors)")
      out2+=("^sep($_MIRROR_RANKING)")
      out2+=("Fasttrack       <small>pacman-mirrors -f5</small>,mb-cli mirrors")
@@ -243,11 +243,11 @@
      out+=("$_RANK_MIRROR,^term(sudo cachyos-rate-mirrors)")
      out+=("^sep()")
 -    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring cachyos-keyring mabox-keyring;read -p "${FINISHED}"")
-+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring cachyos-keyring mabox-keyring;read -rsn1 -p Done)")
++    out+=("$_RENEW_KEYS,^term($SELF run keys)")
      
      else
 -    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring mabox-keyring;read -p "${FINISHED}"")
-+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring mabox-keyring;read -rsn1 -p Done)")
++    out+=("$_RENEW_KEYS,^term($SELF run keys)")
      
      fi
  fi
@@ -285,18 +285,18 @@
  #out+=("$_UPDATE_PAMAC,pamac-manager --updates")
      if hash pacman-mirrors 2>/dev/null;then
 -    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring manjaro-keyring mabox-keyring;read -p "${FINISHED}"")
-+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring manjaro-keyring mabox-keyring;read -rsn1 -p Done)")
++    out+=("$_RENEW_KEYS,^term($SELF run keys)")
      out+=("^sep(<small><i>$_MIRROR_RANKING</i></small>)")
      out+=("Fasttrack    <small>pacman-mirrors -f5</small>,mb-cli mirrors")
      out+=("All  <small>pacman-mirrors -i -c all</small>,mb-cli mirrors_all")
      elif hash cachyos-kernel-manager 2>/dev/null;then
 -    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring cachyos-keyring mabox-keyring;read -p "${FINISHED}"")
-+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring cachyos-keyring mabox-keyring;read -rsn1 -p Done)")
++    out+=("$_RENEW_KEYS,^term($SELF run keys)")
      out+=("^sep()")
      out+=("$_RANK_MIRROR,^term(sudo cachyos-rate-mirrors)")
      else
 -    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring mabox-keyring;read -p "${FINISHED}"")
-+    out+=("$_RENEW_KEYS,^term(sudo pacman -Sy archlinux-keyring mabox-keyring;read -rsn1 -p Done)")
++    out+=("$_RENEW_KEYS,^term($SELF run keys)")
      fi
  fi
  
@@ -574,7 +574,7 @@
  
 --- /dev/null
 +++ b/usr/share/mb-status/mb-status-actions.sh
-@@ -0,0 +1,739 @@
+@@ -0,0 +1,749 @@
 +#!/usr/bin/env bash
 +# Sourced by mb-status. Functions only; `run` in the main script sets -euo pipefail.
 +
@@ -1294,6 +1294,15 @@
 +    pause
 +}
 +
++act_keys() {
++    local keys=(archlinux-keyring mabox-keyring)
++    if hash pacman-mirrors 2>/dev/null; then keys=(archlinux-keyring manjaro-keyring mabox-keyring)
++    elif hash cachyos-kernel-manager 2>/dev/null; then keys=(archlinux-keyring cachyos-keyring mabox-keyring)
++    fi
++    sudo pacman -Syu "${keys[@]}" || echo "${red}pacman -Syu $_A_FAILED${rst}"
++    pause
++}
++
 +run_action() { # action [mode]
 +    init_conf
 +    local a=${1:-} m=${2:-}
@@ -1310,6 +1319,7 @@
 +        leftover) act_leftover "$m" ;;
 +        vm) act_vm "$m" ;;
 +        sysupdate) act_sysupdate "$m" ;;
++        keys) act_keys ;;
 +        appcheck) act_appcheck ;;
 +        *) echo "unknown action: $a"; exit 2 ;;
 +    esac

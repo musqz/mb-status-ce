@@ -717,6 +717,15 @@ act_sysupdate() {
     pause
 }
 
+act_keys() {
+    local keys=(archlinux-keyring mabox-keyring)
+    if hash pacman-mirrors 2>/dev/null; then keys=(archlinux-keyring manjaro-keyring mabox-keyring)
+    elif hash cachyos-kernel-manager 2>/dev/null; then keys=(archlinux-keyring cachyos-keyring mabox-keyring)
+    fi
+    sudo pacman -Syu "${keys[@]}" || echo "${red}pacman -Syu $_A_FAILED${rst}"
+    pause
+}
+
 run_action() { # action [mode]
     init_conf
     local a=${1:-} m=${2:-}
@@ -733,6 +742,7 @@ run_action() { # action [mode]
         leftover) act_leftover "$m" ;;
         vm) act_vm "$m" ;;
         sysupdate) act_sysupdate "$m" ;;
+        keys) act_keys ;;
         appcheck) act_appcheck ;;
         *) echo "unknown action: $a"; exit 2 ;;
     esac
