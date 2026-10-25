@@ -11,7 +11,7 @@
 
 Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
 
-- **Cleanup** section: orphan packages, AUR helper cache, thumbnails and `~/.cache`, developer caches, containers, leftover configs.
+- **Directory size monitor** section (Settings: off hides it, leaving the slim update menu): journal logs, pacman cache, orphan packages, AUR helper cache, thumbnails and `~/.cache`, developer caches, containers, leftover configs.
 - **Update** section: a checkbox behind *Update flatpak* and *Update snap*. Each row shows only if that tool is installed.
 
   Ticked: the pending updates show in the panel count, and the update runs after *Update with pacman/paru/yay*. Clicking the row only toggles the box.

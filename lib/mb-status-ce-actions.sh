@@ -10,6 +10,139 @@ CE_ORPHSEEN="$CE_CACHE/mb-status-ce/orphans-notified"
 
 bold=$'\e[1m'; red=$'\e[31m'; dim=$'\e[2m'; rst=$'\e[0m'
 
+case $LANG in
+pl*)
+_A_NOT_INSTALLED=$'nie jest zainstalowany.'
+_A_PRESS_KEY=$'Naciśnij dowolny klawisz, aby zamknąć'
+_A_PROCEED=$'Kontynuować? [t/N] '
+_A_YES='[yYtT]'
+_A_CANNOT_UNDO=$'Tego nie można cofnąć.'
+_A_COMMAND=$'Polecenie:'
+_A_CURRENT_SIZE=$'Aktualny rozmiar:'
+_A_DRY_RUN=$'Podgląd (bez zmian):'
+_A_CANCELLED=$'Anulowano.'
+_A_CMD_FAILED=$'Polecenie nie powiodło się.'
+_A_RECOVERED=$'Odzyskano'
+_A_DONE=$'Gotowe.'
+_A_NOTHING_TO_REMOVE=$'Nic do usunięcia.'
+_A_FILES=$'plików'
+_A_AND=$'i'
+_A_MORE=$'więcej'
+_A_DAYS=$'dni'
+_A_FAILED=$'nie powiodło się.'
+_A_SOME_NOT_REMOVED=$'nie udało się usunąć niektórych elementów'
+_A_JOURNAL=$'Logi journala'
+_A_JOURNAL_INFO=$'Wpisy dziennika ponad limit są usuwane. Ostatnie wpisy,\nw tym dane o ostatniej awarii, zostają.'
+_A_PACCACHE=$'Cache pacmana'
+_A_PACCACHE_INFO=$'Stare pliki pakietów w /var/cache/pacman/pkg. Aktualizacje rolling\nczasem wymagają powrotu do starszej wersji: zachowaj co najmniej 1-2 wersje.'
+_A_PACCACHE_ALL=$'Usuwa wszystkie pliki pakietów z cache. Później nie będzie\nmożna wrócić do starszej wersji. Dalej pacman zada własne pytania.'
+_A_SKIPPED_UNREADABLE=$'pominięto, brak odczytu:'
+_A_CONFIG_BACKUP=$'Kopia konfiguracji:'
+_A_NO_ORPHANS=$'Brak pakietów osieroconych.'
+_A_ORPHANS=$'Pakiety osierocone'
+_A_OPTIONAL_FOR=$'opcjonalny dla'
+_A_ORPH_R_INFO=$'Usuwa tylko wymienione pakiety. Zmienione pliki konfiguracji\nzostają jako .pacsave. W razie potrzeby zainstaluj ponownie z cache pacmana.'
+_A_ORPH_RS_INFO=$'Usuwa pakiety i zależności, których nic innego nie potrzebuje.\nZmienione pliki konfiguracji zostają jako .pacsave.'
+_A_ORPH_RNS_INFO=$'Usuwa pakiety, nieużywane zależności i ich pliki\nkonfiguracji (bez .pacsave). Na liście mogą być zależności\nopcjonalne innych pakietów: sprawdź podgląd.'
+_A_BACKUP_COPY=$'skopiuj pliki /etc każdego pakietu (i usuwanych z nim zależności) do'
+_A_BACKUP_THEN=$'potem'
+_A_ORPH_BACKUP_INFO=$'Kopiuje pliki /etc każdego pakietu do folderu kopii z datą,\npotem usuwa go przez pacman -Rns.'
+_A_AUR=$'Cache pomocnika AUR'
+_A_AUR_INFO=$'Pobrane źródła i pliki budowania pakietów AUR.'
+_A_THUMBS=$'Miniatury'
+_A_THUMBS_ALL_INFO=$'Wszystkie miniatury. Powstają ponownie po otwarciu folderów.'
+_A_THUMBS_OLD1=$'Miniatury nieużywane od'
+_A_THUMBS_OLD2=$'Powstają ponownie w razie potrzeby.'
+_A_CACHE_TITLE=$'Folder cache (.cache)'
+_A_CACHE1=$'Pliki nieużywane i niezmieniane od'
+_A_CACHE2=$'Aplikacje odbudują swoje cache.'
+_A_IGNORED=$'Ignorowane:'
+_A_NONE=$'brak'
+_A_EDIT_LIST=$'Edytuj listę w'
+_A_TRASH=$'Śmietnik'
+_A_TRASH_INFO=$'Trwale usuwa wszystko ze śmietnika.'
+_A_DEV_TITLE=$'Cache deweloperskie:'
+_A_DEV_INFO=$'Pobrane lub zbudowane dane. Narzędzia pobiorą lub zbudują je przy następnym użyciu.'
+_A_GOMOD_INFO=$'Pobrane moduły Go. Każdy moduł zostanie pobrany ponownie\nprzy następnym budowaniu; budowanie offline nie zadziała.'
+_A_CARGO_INFO=$'Usuwa rozpakowane źródła i checkouty git. Pobrane\npaczki crates zostają.'
+_A_CONT_TITLE=$'Kontenery:'
+_A_DOCKER_INFO=$'Usuwa zatrzymane kontenery, nieużywane sieci i osierocone\nobrazy. Woluminy pozostają nietknięte.'
+_A_FLATPAK_INFO=$'Usuwa środowiska, których nie potrzebuje żadna zainstalowana aplikacja.'
+_A_SNAP_INFO=$'Usuwa wyłączone (stare) rewizje zainstalowanych snapów.'
+_A_OLD_REVISION=$'stara rewizja'
+_A_LEFTOVER=$'Pozostałe konfiguracje (.pacnew / .pacsave)'
+_A_MERGE_INFO=$'Otwiera każdy plik w meld obok oryginału. Scal go,\nzachowaj nowy lub pomiń. Nic nie zmieni się bez twojego wyboru.'
+_A_CHECKING=$'Sprawdzanie aktualizacji flatpak/snap...'
+_A_BTN_REVIEW=$'Przejrzyj'
+_A_BTN_BACKUP=$'Kopia i usuń'
+;;
+*)
+_A_NOT_INSTALLED=$'is not installed.'
+_A_PRESS_KEY=$'Press any key to close'
+_A_PROCEED=$'Proceed? [y/N] '
+_A_YES='[yY]'
+_A_CANNOT_UNDO=$'This cannot be undone.'
+_A_COMMAND=$'Command:'
+_A_CURRENT_SIZE=$'Current size:'
+_A_DRY_RUN=$'Dry run / preview:'
+_A_CANCELLED=$'Cancelled.'
+_A_CMD_FAILED=$'Command failed.'
+_A_RECOVERED=$'Recovered'
+_A_DONE=$'Done.'
+_A_NOTHING_TO_REMOVE=$'Nothing to remove.'
+_A_FILES=$'files'
+_A_AND=$'and'
+_A_MORE=$'more'
+_A_DAYS=$'days'
+_A_FAILED=$'failed.'
+_A_SOME_NOT_REMOVED=$'some items could not be removed'
+_A_JOURNAL=$'Journal logs'
+_A_JOURNAL_INFO=$'Journal entries beyond the limit are deleted. Recent entries,\nincluding the last crash info, stay.'
+_A_PACCACHE=$'Pacman cache'
+_A_PACCACHE_INFO=$'Old package files in /var/cache/pacman/pkg. Rolling updates\nsometimes need a downgrade: keep at least 1-2 versions.'
+_A_PACCACHE_ALL=$'Removes every cached package file. No downgrade possible\nafterwards. pacman asks its own questions next.'
+_A_SKIPPED_UNREADABLE=$'skipped, not readable:'
+_A_CONFIG_BACKUP=$'Config backup:'
+_A_NO_ORPHANS=$'No orphan packages.'
+_A_ORPHANS=$'Orphan packages'
+_A_OPTIONAL_FOR=$'optional for'
+_A_ORPH_R_INFO=$'Removes only the listed packages. Config files you changed are\nkept as .pacsave. Reinstall from the pacman cache if needed.'
+_A_ORPH_RS_INFO=$'Removes the packages and dependencies nothing else needs.\nChanged config files are kept as .pacsave.'
+_A_ORPH_RNS_INFO=$'Removes the packages, unused dependencies and their config\nfiles (no .pacsave). Optional dependencies of other\npackages may be listed: check the preview.'
+_A_BACKUP_COPY=$'copy /etc files of each package (and dependencies removed with it) to'
+_A_BACKUP_THEN=$'then'
+_A_ORPH_BACKUP_INFO=$'Copies each package\'s /etc files to a dated backup folder,\nthen removes it with pacman -Rns.'
+_A_AUR=$'AUR helper cache'
+_A_AUR_INFO=$'Downloaded sources and build files of AUR packages.'
+_A_THUMBS=$'Thumbnails'
+_A_THUMBS_ALL_INFO=$'All thumbnails. They are recreated when folders are opened.'
+_A_THUMBS_OLD1=$'Thumbnails not used for'
+_A_THUMBS_OLD2=$'They are recreated when needed.'
+_A_CACHE_TITLE=$'Cache folder (.cache)'
+_A_CACHE1=$'Files not accessed or changed for'
+_A_CACHE2=$'Apps rebuild their caches.'
+_A_IGNORED=$'Ignored:'
+_A_NONE=$'none'
+_A_EDIT_LIST=$'Edit the list in'
+_A_TRASH=$'Trash'
+_A_TRASH_INFO=$'Permanently deletes everything in the trash.'
+_A_DEV_TITLE=$'Developer cache:'
+_A_DEV_INFO=$'Downloaded or built data. Tools fetch or rebuild it on next use.'
+_A_GOMOD_INFO=$'Go module downloads. Every module is fetched again on\nthe next build; offline builds fail until then.'
+_A_CARGO_INFO=$'Removes unpacked sources and git checkouts. Downloaded\ncrates stay.'
+_A_CONT_TITLE=$'Containers:'
+_A_DOCKER_INFO=$'Removes stopped containers, unused networks and dangling\nimages. Volumes are not touched.'
+_A_FLATPAK_INFO=$'Removes runtimes no installed app needs.'
+_A_SNAP_INFO=$'Removes disabled (old) revisions of installed snaps.'
+_A_OLD_REVISION=$'old revision'
+_A_LEFTOVER=$'Leftover configs (.pacnew / .pacsave)'
+_A_MERGE_INFO=$'Opens each file in meld next to the original. Merge it,\nkeep the new one or skip it. Nothing is changed without your choice.'
+_A_CHECKING=$'Checking flatpak/snap updates...'
+_A_BTN_REVIEW=$'Review'
+_A_BTN_BACKUP=$'Back up and remove'
+;;
+esac
+
 init_conf() {
     [[ -f $CE_CONF ]] && return 0
     mkdir -p "$(dirname "$CE_CONF")"
@@ -73,13 +206,13 @@ orphan_bytes() {
 
 need() {
     hash "$1" 2>/dev/null && return 0
-    echo "${red}$1 is not installed.${rst}"
+    echo "${red}$1 $_A_NOT_INSTALLED${rst}"
     pause
     exit 1
 }
 
-pause() { read -rsn1 -p "${dim}Press any key to close${rst}" || true; echo; }
-ask() { local a; read -rp "Proceed? [y/N] " a || return 1; [[ $a == [yY] ]]; }
+pause() { read -rsn1 -p "${dim}${_A_PRESS_KEY}${rst}" || true; echo; }
+ask() { local a; read -rp "$_A_PROCEED" a || return 1; [[ $a == $_A_YES ]]; }
 
 # Globals set by each action, consumed by flow()
 TITLE=""; INFO=""; DANGER=0; SHOW=""; MEASURE_FN=""
@@ -96,26 +229,26 @@ flow() {
     local before after cmdtxt
     cmdtxt=${SHOW:-$(printf '%q ' "${CMD[@]}")}
     printf '%s%s%s\n%s\n\n' "$bold" "$TITLE" "$rst" "$INFO"
-    ((DANGER)) && printf '%sThis cannot be undone.%s\n\n' "$red" "$rst"
-    printf 'Command:\n  $ %s\n\n' "$cmdtxt"
+    ((DANGER)) && printf '%s%s%s\n\n' "$red" "$_A_CANNOT_UNDO" "$rst"
+    printf '%s\n  $ %s\n\n' "$_A_COMMAND" "$cmdtxt"
     before=$(measure)
-    [[ -n $before && -z $MEASURE_FN ]] && printf 'Current size: %s\n\n' "$(human "$before")"
+    [[ -n $before && -z $MEASURE_FN ]] && printf '%s %s\n\n' "$_A_CURRENT_SIZE" "$(human "$before")"
     if ((${#DRY[@]})); then
-        echo "${dim}Dry run / preview:${rst}"
+        echo "${dim}${_A_DRY_RUN}${rst}"
         "${DRY[@]}" || true
         echo
     fi
-    if ! ask; then echo "Cancelled."; pause; return 0; fi
+    if ! ask; then echo "$_A_CANCELLED"; pause; return 0; fi
     echo
-    "${CMD[@]}" || echo "${red}Command failed.${rst}"
+    "${CMD[@]}" || echo "${red}${_A_CMD_FAILED}${rst}"
     echo
     if [[ -n $before ]]; then
         after=$(measure)
         local diff=$((before - after))
         ((diff < 0)) && diff=0
-        echo "Recovered $(human "$diff")"
+        echo "$_A_RECOVERED $(human "$diff")"
     else
-        echo "Done."
+        echo "$_A_DONE"
     fi
     pause
 }
@@ -149,12 +282,12 @@ stale_bytes() { # root days [ignore names...]
 }
 
 stale_preview() {
-    if ((${#STALE[@]} == 0)); then echo "Nothing to remove."; return 0; fi
+    if ((${#STALE[@]} == 0)); then echo "$_A_NOTHING_TO_REMOVE"; return 0; fi
     local size
     size=$(printf '%s\0' "${STALE[@]}" | du -sbc --files0-from=- 2>/dev/null | awk 'END{print $1+0}')
-    echo "${#STALE[@]} files, $(human "$size")"
+    echo "${#STALE[@]} $_A_FILES, $(human "$size")"
     printf '  %s\n' "${STALE[@]:0:12}"
-    ((${#STALE[@]} > 12)) && echo "  ... and $((${#STALE[@]} - 12)) more"
+    ((${#STALE[@]} > 12)) && echo "  ... $_A_AND $((${#STALE[@]} - 12)) $_A_MORE"
     return 0
 }
 
@@ -172,9 +305,8 @@ act_journal() {
         200M|500M) CMD=(sudo journalctl "--vacuum-size=$1") ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
-    TITLE="Journal logs"
-    INFO="Journal entries beyond the limit are deleted. Recent entries,
-including the last crash info, stay."
+    TITLE="$_A_JOURNAL"
+    INFO="$_A_JOURNAL_INFO"
     DRY=(journalctl --disk-usage)
     MEASURE_FN=journal_bytes
     flow
@@ -182,9 +314,8 @@ including the last crash info, stay."
 
 act_paccache() {
     need paccache
-    TITLE="Pacman cache"
-    INFO="Old package files in /var/cache/pacman/pkg. Rolling updates
-sometimes need a downgrade: keep at least 1-2 versions."
+    TITLE="$_A_PACCACHE"
+    INFO="$_A_PACCACHE_INFO"
     MEASURE=(/var/cache/pacman/pkg)
     case $1 in
         k3) CMD=(sudo paccache -rk3); DRY=(paccache -dk3) ;;
@@ -193,8 +324,7 @@ sometimes need a downgrade: keep at least 1-2 versions."
         all)
             CMD=(sudo pacman -Scc); DRY=()
             DANGER=1
-            INFO="Removes every cached package file. No downgrade possible
-afterwards. pacman asks its own questions next." ;;
+            INFO="$_A_PACCACHE_ALL" ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
     flow
@@ -211,11 +341,11 @@ orphan_backup_remove() {
                 mkdir -p "$d/$p"
                 cp --parents -p -- "$f" "$d/$p/"
             else
-                echo "  skipped, not readable: $f"
+                echo "  $_A_SKIPPED_UNREADABLE $f"
             fi
         done < <(pacman -Ql "$p" | awk '{print $2}' | grep '^/etc/' || true)
     done
-    echo "Config backup: $d"
+    echo "$_A_CONFIG_BACKUP $d"
     sudo pacman -Rns "${PK[@]}"
 }
 
@@ -223,17 +353,17 @@ act_orphans() {
     need pacman
     mapfile -t PK < <(orphans)
     if ((${#PK[@]} == 0)); then
-        echo "No orphan packages."
+        echo "$_A_NO_ORPHANS"
         pause
         return 0
     fi
-    TITLE="Orphan packages (${#PK[@]})"
+    TITLE="$_A_ORPHANS (${#PK[@]})"
     MEASURE_FN=root_used
     case $1 in
         review)
             printf '%s%s%s\n\n' "$bold" "$TITLE" "$rst"
             # largest first; the pager only starts when the list does not fit the window
-            { LC_ALL=C pacman -Qi "${PK[@]}" | awk '
+            { LC_ALL=C pacman -Qi "${PK[@]}" | awk -v of="$_A_OPTIONAL_FOR" '
                 function val(  v) { v = $0; sub(/^[^:]*: +/, "", v); return v }
                 /^Name/ { n = val() }
                 /^Version/ { v = val() }
@@ -242,7 +372,7 @@ act_orphans() {
                 /^Installed Size/ {
                     split(val(), z, " ")
                     m = (z[2] == "KiB") ? 1024 : (z[2] == "MiB") ? 1048576 : (z[2] == "GiB") ? 1073741824 : 1
-                    printf "%d\t%s %s (%s %s) %s%s\n", z[1] * m, n, v, z[1], z[2], d, (o != "None" ? "  [optional for: " o "]" : "")
+                    printf "%d\t%s %s (%s %s) %s%s\n", z[1] * m, n, v, z[1], z[2], d, (o != "None" ? "  [" of ": " o "]" : "")
                 }' | sort -rn | cut -f2- | less -FRSX; } || true
             echo
             pause
@@ -250,26 +380,21 @@ act_orphans() {
         R)
             CMD=(sudo pacman -R "${PK[@]}")
             DRY=(pacman -R --print --print-format '%n %v' "${PK[@]}")
-            INFO="Removes only the listed packages. Config files you changed are
-kept as .pacsave. Reinstall from the pacman cache if needed." ;;
+            INFO="$_A_ORPH_R_INFO" ;;
         Rs)
             CMD=(sudo pacman -Rs "${PK[@]}")
             DRY=(pacman -Rs --print --print-format '%n %v' "${PK[@]}")
-            INFO="Removes the packages and dependencies nothing else needs.
-Changed config files are kept as .pacsave." ;;
+            INFO="$_A_ORPH_RS_INFO" ;;
         Rns)
             CMD=(sudo pacman -Rns "${PK[@]}")
             DRY=(pacman -Rs --print --print-format '%n %v' "${PK[@]}")
             DANGER=1
-            INFO="Removes the packages, unused dependencies and their config
-files (no .pacsave). Optional dependencies of other
-packages may be listed: check the preview." ;;
+            INFO="$_A_ORPH_RNS_INFO" ;;
         backup)
             CMD=(orphan_backup_remove)
-            SHOW="copy /etc files of each package (and dependencies removed with it) to $CE_BACKUP/<date>/, then sudo pacman -Rns <orphans>"
+            SHOW="$_A_BACKUP_COPY $CE_BACKUP/<date>/, $_A_BACKUP_THEN sudo pacman -Rns <orphans>"
             DRY=(pacman -Rs --print --print-format '%n %v' "${PK[@]}")
-            INFO="Copies each package's /etc files to a dated backup folder,
-then removes it with pacman -Rns." ;;
+            INFO="$_A_ORPH_BACKUP_INFO" ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
     INFO="$(printf '  %s\n' "${PK[@]}")
@@ -279,8 +404,8 @@ $INFO"
 }
 
 act_aur() {
-    TITLE="AUR helper cache"
-    INFO="Downloaded sources and build files of AUR packages."
+    TITLE="$_A_AUR"
+    INFO="$_A_AUR_INFO"
     case $1 in
         paru) need paru; CMD=(paru -Sc --aur); MEASURE=("$CE_CACHE/paru") ;;
         yay) need yay; CMD=(yay -Sc --aur); MEASURE=("$CE_CACHE/yay") ;;
@@ -292,14 +417,14 @@ act_aur() {
 
 act_thumbs() {
     local days
-    TITLE="Thumbnails"
+    TITLE="$_A_THUMBS"
     if [[ ${1:-} == all ]]; then
         days=-1
-        INFO="All thumbnails. They are recreated when folders are opened."
+        INFO="$_A_THUMBS_ALL_INFO"
         SHOW="find ~/.cache/thumbnails -type f -delete"
     else
         days=$(conf_days thumb_days 14)
-        INFO="Thumbnails not used for $days days. They are recreated when needed."
+        INFO="$_A_THUMBS_OLD1 $days $_A_DAYS. $_A_THUMBS_OLD2"
         SHOW="find ~/.cache/thumbnails -type f -atime +$days -mtime +$days -delete"
     fi
     stale_load "$CE_CACHE/thumbnails" "$days"
@@ -312,10 +437,10 @@ act_cache() {
     local days ign
     days=$(conf_days cache_days 30)
     ign=$(conf_get cache_ignore "")
-    TITLE="Cache folder (.cache)"
-    INFO="Files not accessed or changed for $days days. Apps rebuild
-their caches. Ignored: ${ign:-none}
-Edit the list in $CE_CONF"
+    TITLE="$_A_CACHE_TITLE"
+    INFO="$_A_CACHE1 $days $_A_DAYS. $_A_CACHE2
+$_A_IGNORED ${ign:-$_A_NONE}
+$_A_EDIT_LIST $CE_CONF"
     # shellcheck disable=SC2086
     stale_load "$CE_CACHE" "$days" $ign
     SHOW="find ~/.cache -type f -atime +$days -mtime +$days (ignore list applied) -delete"
@@ -327,7 +452,7 @@ Edit the list in $CE_CONF"
 empty_trash() {
     local d
     for d in files info expunged; do
-        [[ -d $CE_TRASH/$d ]] && find "$CE_TRASH/$d" -mindepth 1 -delete || echo "some items could not be removed"
+        [[ -d $CE_TRASH/$d ]] && find "$CE_TRASH/$d" -mindepth 1 -delete || echo "$_A_SOME_NOT_REMOVED"
     done
     return 0
 }
@@ -335,8 +460,8 @@ empty_trash() {
 trash_preview() { find "$CE_TRASH/files" -mindepth 1 -maxdepth 1 -printf "  %f\n" 2>/dev/null | head -15 || true; }
 
 act_trash() {
-    TITLE="Trash"
-    INFO="Permanently deletes everything in the trash."
+    TITLE="$_A_TRASH"
+    INFO="$_A_TRASH_INFO"
     DANGER=1
     SHOW="find ~/.local/share/Trash/{files,info,expunged} -mindepth 1 -delete"
     DRY=(trash_preview); CMD=(empty_trash)
@@ -345,22 +470,20 @@ act_trash() {
 }
 
 act_dev() {
-    TITLE="Developer cache: $1"
-    INFO="Downloaded or built data. Tools fetch or rebuild it on next use."
+    TITLE="$_A_DEV_TITLE $1"
+    INFO="$_A_DEV_INFO"
     case $1 in
         go) need go; CMD=(go clean -cache); MEASURE=("$(go env GOCACHE)") ;;
         gomod)
             need go; CMD=(go clean -modcache); MEASURE=("$(go env GOMODCACHE)")
             DANGER=1
-            INFO="Go module downloads. Every module is fetched again on
-the next build; offline builds fail until then." ;;
+            INFO="$_A_GOMOD_INFO" ;;
         npm-verify) need npm; CMD=(npm cache verify); MEASURE=("$(npm config get cache)/_cacache") ;;
         npm) need npm; CMD=(npm cache clean --force); MEASURE=("$(npm config get cache)/_cacache") ;;
         cargo)
             need cargo-cache; CMD=(cargo cache --autoclean)
             MEASURE=("${CARGO_HOME:-$HOME/.cargo}/registry")
-            INFO="Removes unpacked sources and git checkouts. Downloaded
-crates stay." ;;
+            INFO="$_A_CARGO_INFO" ;;
         pip) need pip; CMD=(pip cache purge); MEASURE=("$(pip cache dir)") ;;
         yarn) need yarn; CMD=(yarn cache clean); MEASURE=("$(yarn cache dir)") ;;
         pnpm) need pnpm; CMD=(pnpm store prune); MEASURE=("$(pnpm store path)") ;;
@@ -380,24 +503,23 @@ snap_remove_old() {
 
 act_containers() {
     local d=()
-    TITLE="Containers: $1"
+    TITLE="$_A_CONT_TITLE $1"
     case $1 in
         docker)
             need docker
             d=(docker); docker info >/dev/null 2>&1 || d=(sudo docker)
-            INFO="Removes stopped containers, unused networks and dangling
-images. Volumes are not touched."
+            INFO="$_A_DOCKER_INFO"
             DRY=("${d[@]}" system df); CMD=("${d[@]}" system prune) ;;
         flatpak)
             need flatpak
-            INFO="Removes runtimes no installed app needs."
+            INFO="$_A_FLATPAK_INFO"
             CMD=(flatpak uninstall --unused)
             MEASURE=(/var/lib/flatpak "$HOME/.local/share/flatpak") ;;
         snap)
             need snap
-            INFO="Removes disabled (old) revisions of installed snaps."
+            INFO="$_A_SNAP_INFO"
             DRY=(snap_old); CMD=(snap_remove_old)
-            SHOW="sudo snap remove <name> --revision=<old revision>"
+            SHOW="sudo snap remove <name> --revision=<$_A_OLD_REVISION>"
             MEASURE=(/var/lib/snapd/snaps) ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
@@ -406,7 +528,7 @@ images. Volumes are not touched."
 
 act_leftover() {
     need pacdiff
-    TITLE="Leftover configs (.pacnew / .pacsave)"
+    TITLE="$_A_LEFTOVER"
     case $1 in
         list)
             printf '%s%s%s\n\n' "$bold" "$TITLE" "$rst"
@@ -415,8 +537,7 @@ act_leftover() {
             pause ;;
         merge)
             need meld
-            INFO="Opens each file in meld next to the original. Merge it,
-keep the new one or skip it. Nothing is changed without your choice."
+            INFO="$_A_MERGE_INFO"
             DRY=(pacdiff -o); CMD=(env DIFFPROG=meld pacdiff --sudo)
             flow ;;
         *) echo "unknown mode: $1"; exit 2 ;;
@@ -461,11 +582,11 @@ act_orphancheck() {
     sig=$(printf '%s\n' "${list[@]}" | sort | md5sum | cut -d' ' -f1)
     [[ $(cat "$CE_ORPHSEEN" 2>/dev/null) == "$sig" ]] && return 0
     body="${list[*]:0:5}"
-    ((n > 5)) && body+=" and $((n - 5)) more"
+    ((n > 5)) && body+=" $_A_AND $((n - 5)) $_A_MORE"
     ob=$(orphan_bytes "${list[@]}")
-    notify-send.sh -a mb-status-ce -i user-trash-full -t 120000 -f "Orphan packages: $n${ob:+ ($(human "$ob"))}" "$body" \
-        -o "Review:terminator -T Orphans -x $SELF run orphans review" \
-        -o "Back up and remove:terminator -T Orphans -x $SELF run orphans backup" || return 0
+    notify-send.sh -a mb-status-ce -i user-trash-full -t 120000 -f "$_A_ORPHANS: $n${ob:+ ($(human "$ob"))}" "$body" \
+        -o "$_A_BTN_REVIEW:terminator -T Orphans -x $SELF run orphans review" \
+        -o "$_A_BTN_BACKUP:terminator -T Orphans -x $SELF run orphans backup" || return 0
     echo "$sig" > "$CE_ORPHSEEN"
 }
 
@@ -486,14 +607,14 @@ act_sysupdate() {
         pacman) CMD=(sudo pacman -Syu) ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
-    "${CMD[@]}" || echo "${red}${CMD[*]} failed.${rst}"
+    "${CMD[@]}" || echo "${red}${CMD[*]} $_A_FAILED${rst}"
     if app_update_on flatpak && app_usable flatpak; then
-        echo; flatpak update || echo "${red}flatpak update failed.${rst}"
+        echo; flatpak update || echo "${red}flatpak update $_A_FAILED${rst}"
     fi
     if app_update_on snap && app_usable snap; then
-        echo; sudo snap refresh || echo "${red}snap refresh failed.${rst}"
+        echo; sudo snap refresh || echo "${red}snap refresh $_A_FAILED${rst}"
     fi
-    echo; echo "Checking flatpak/snap updates..."
+    echo; echo "$_A_CHECKING"
     act_appcheck
     echo
     pause
