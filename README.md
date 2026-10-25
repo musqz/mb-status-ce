@@ -19,6 +19,8 @@ Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
 
 ![mb-status-ce animation](docs/preview.gif)
 
+![Orphan packages](docs/orphans.png)
+
 Entries for tools that are not installed are hidden:
 
 - AUR helper cache: needs `paru`, `yay` or `pamac`.
