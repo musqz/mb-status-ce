@@ -21,7 +21,7 @@ Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
 
 ![mb-status-ce preview](docs/preview.png)
 
-Slim menu with the Directory size monitor off:
+Slim menu with the Directory size monitor off, and the Settings submenu:
 
 ![mb-status-ce slim menu](docs/slim.png)
 
