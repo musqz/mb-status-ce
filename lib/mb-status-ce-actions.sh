@@ -49,6 +49,9 @@ _A_BACKUP_THEN=$'potem'
 _A_ORPH_BACKUP_INFO=$'Kopiuje pliki /etc każdego pakietu do folderu kopii z datą,\npotem usuwa go przez pacman -Rns.'
 _A_AUR=$'Cache pomocnika AUR'
 _A_AUR_INFO=$'Pobrane źródła i pliki budowania pakietów AUR.'
+_A_AUR_PICK_HEAD=$'Tab: zaznacz, Enter: potwierdź, Esc: anuluj'
+_A_NOTHING_PICKED=$'Nic nie wybrano.'
+_A_AUR_PICK_INFO=$'Usuwa tylko zaznaczone foldery. Lista zawiera też zainstalowane pakiety:\nich źródła zostaną pobrane ponownie przy następnej aktualizacji.'
 _A_THUMBS=$'Miniatury'
 _A_THUMBS_ALL_INFO=$'Wszystkie miniatury. Powstają ponownie po otwarciu folderów.'
 _A_THUMBS_OLD1=$'Miniatury nieużywane od'
@@ -116,6 +119,9 @@ _A_BACKUP_THEN=$'then'
 _A_ORPH_BACKUP_INFO=$'Copies each package\'s /etc files to a dated backup folder,\nthen removes it with pacman -Rns.'
 _A_AUR=$'AUR helper cache'
 _A_AUR_INFO=$'Downloaded sources and build files of AUR packages.'
+_A_AUR_PICK_HEAD=$'Tab: select, Enter: confirm, Esc: cancel'
+_A_NOTHING_PICKED=$'Nothing selected.'
+_A_AUR_PICK_INFO=$'Removes only the selected folders. The list includes installed\npackages: their sources are fetched again on the next update.'
 _A_THUMBS=$'Thumbnails'
 _A_THUMBS_ALL_INFO=$'All thumbnails. They are recreated when folders are opened.'
 _A_THUMBS_OLD1=$'Thumbnails not used for'
@@ -409,6 +415,25 @@ $INFO"
     flow
 }
 
+# fzf list of package build folders; sets PICKED to the chosen paths
+aur_pick() {
+    local d b p
+    local -a lines=()
+    PICKED=()
+    for d in "$CE_CACHE/yay" "$CE_CACHE/paru/clone"; do
+        [[ -d $d && ! -L $d ]] || continue
+        while IFS=$'\t' read -r b p; do
+            p=${p%/}
+            [[ -d $p && ! -L $p && ${p##*/} =~ ^[A-Za-z0-9._@+-]+$ ]] || continue
+            lines+=("$b"$'\t'"$(human "$b")"$'\t'"${p#"$CE_CACHE"/}"$'\t'"$p")
+        done < <(du -sb -- "$d"/*/ 2>/dev/null)
+    done
+    ((${#lines[@]})) || return 0
+    mapfile -t PICKED < <(printf '%s\n' "${lines[@]}" | sort -rn |
+        cut -f2- | fzf -m --delimiter=$'\t' --with-nth=1,2 --header="$_A_AUR_PICK_HEAD" |
+        cut -f3)
+}
+
 act_aur() {
     TITLE="$_A_AUR"
     INFO="$_A_AUR_INFO"
@@ -416,6 +441,13 @@ act_aur() {
         paru) need paru; CMD=(paru -Sc --aur); MEASURE=("$CE_CACHE/paru") ;;
         yay) need yay; CMD=(yay -Sc --aur); MEASURE=("$CE_CACHE/yay") ;;
         pamac) need pamac; CMD=(pamac clean -b); MEASURE=("/var/tmp/pamac-build-$USER") ;;
+        pick)
+            need fzf
+            aur_pick
+            if ((${#PICKED[@]} == 0)); then echo "$_A_NOTHING_PICKED"; pause; return 0; fi
+            INFO="$_A_AUR_PICK_INFO"
+            DRY=(printf '  %s\n' "${PICKED[@]#"$CE_CACHE"/}")
+            CMD=(rm -rf -- "${PICKED[@]}"); MEASURE=("${PICKED[@]}") ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
     flow
