@@ -19,11 +19,13 @@ Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
   Ticked: the pending updates show in the panel count, and the update runs after *Update with pacman/paru/yay*. Clicking the row only toggles the box.
 - Nerd Font icons per entry.
 
-![mb-status-ce preview](docs/preview.png)
-
-Slim menu with the Directory size monitor off, and the Settings submenu:
-
-![mb-status-ce slim menu](docs/slim.png)
+<table>
+<tr>
+<td align="center"><img src="docs/preview.png" width="260" alt="mb-status-ce preview"><br>Full menu</td>
+<td align="center"><img src="docs/slim.png" width="260" alt="mb-status-ce slim menu"><br>Slim menu (monitor off) and Settings</td>
+<td align="center"><img src="docs/thumbnails.png" width="260" alt="mb-status-ce thumbnails and cache"><br>Thumbnails / .cache</td>
+</tr>
+</table>
 
 Entries for tools that are not installed are hidden:
 
@@ -38,19 +40,15 @@ Every cleanup action opens a terminal, shows the command and a preview, and asks
 
 Orphan packages, *Back up configs then remove*:
 
-![mb-status-ce orphans backup](docs/orphans-backup.png)
-
-Thumbnails / .cache: old thumbnails, all thumbnails, or stale files in `~/.cache`:
-
-![mb-status-ce thumbnails and cache](docs/thumbnails.png)
+<img src="docs/orphans-backup.png" width="700" alt="mb-status-ce orphans backup">
 
 Virtual machines: quickemu VMs from the `qemu_dir` folders (default `~/emu`), grouped by folder, with size and last change per VM:
 
-![mb-status-ce virtual machines](docs/vm-menu.png)
+<img src="docs/vm-menu.png" width="360" alt="mb-status-ce virtual machines">
 
 Deleting a VM asks first and shows what goes:
 
-![mb-status-ce delete a virtual machine](docs/vm-delete.png)
+<img src="docs/vm-delete.png" width="700" alt="mb-status-ce delete a virtual machine">
 
 ## Configuration
 
