@@ -173,6 +173,7 @@ _BACKUP_THEN_REMOVE="Kopia konfiguracji, potem usuń"
 _REMOVE_DEPS_CONFIGS="Usuń z zależnościami i konfiguracją"
 _AUR_CACHE="Cache pomocnika AUR"
 _AUR_INFO="Pobrane źródła i pliki budowania."
+_AUR_PICK="Wybierz pakiety do usunięcia"
 _THUMBS_CACHE="Miniatury / .cache"
 _CACHE_INFO1="Rozmiar dotyczy tylko starych plików."
 _WHOLE_CACHE="Cały .cache:"
@@ -271,6 +272,7 @@ _BACKUP_THEN_REMOVE="Back up configs then remove"
 _REMOVE_DEPS_CONFIGS="Remove with deps and configs"
 _AUR_CACHE="AUR helper cache"
 _AUR_INFO="Downloaded sources and build files."
+_AUR_PICK="Choose packages to remove"
 _THUMBS_CACHE="Thumbnails / .cache"
 _CACHE_INFO1="Size shown = stale files only."
 _WHOLE_CACHE="Whole .cache:"
@@ -564,6 +566,9 @@ fi
                 hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
                 hash yay 2>/dev/null && opt "yay" "yay -Sc --aur" aur yay
                 hash pamac 2>/dev/null && opt "pamac" "pamac clean -b" aur pamac
+                if hash fzf 2>/dev/null && has_files "$CE_CACHE/yay" "$CE_CACHE/paru/clone"; then
+                    opt "$_AUR_PICK" "fzf" aur pick
+                fi
             fi
         fi
 

@@ -64,7 +64,7 @@
  ## MENU
  menu(){
  . /usr/share/mb-jgtools/jgtools.inc
-@@ -115,6 +150,53 @@
+@@ -115,6 +150,54 @@
  _ICON="Ikona"
  _COLOR="Kolor"
  _ICON_COLORS="Kolory i Ikona"
@@ -91,6 +91,7 @@
 +_REMOVE_DEPS_CONFIGS="Usuń z zależnościami i konfiguracją"
 +_AUR_CACHE="Cache pomocnika AUR"
 +_AUR_INFO="Pobrane źródła i pliki budowania."
++_AUR_PICK="Wybierz pakiety do usunięcia"
 +_THUMBS_CACHE="Miniatury / .cache"
 +_CACHE_INFO1="Rozmiar dotyczy tylko starych plików."
 +_WHOLE_CACHE="Cały .cache:"
@@ -118,7 +119,7 @@
  ;;
  *)	
  _KERNEL="kernel"
-@@ -166,10 +248,103 @@
+@@ -166,10 +249,104 @@
  _ICON="Icon"
  _COLOR="Color"
  _ICON_COLORS="Colors and Icon"
@@ -145,6 +146,7 @@
 +_REMOVE_DEPS_CONFIGS="Remove with deps and configs"
 +_AUR_CACHE="AUR helper cache"
 +_AUR_INFO="Downloaded sources and build files."
++_AUR_PICK="Choose packages to remove"
 +_THUMBS_CACHE="Thumbnails / .cache"
 +_CACHE_INFO1="Size shown = stale files only."
 +_WHOLE_CACHE="Whole .cache:"
@@ -222,7 +224,7 @@
  
  PKGS=$(pacman -Qq 2>/dev/null | wc -l)
  # kernel version
-@@ -225,12 +400,13 @@
+@@ -225,12 +402,13 @@
  
  if [[ "${upkgs}" == 0 ]];then
  out+=("^sep(<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span> <small><i>$_UP_TO_DATE</i></small>)") 
@@ -238,7 +240,7 @@
      out2+=("^tag(mirrors)")
      out2+=("^sep($_MIRROR_RANKING)")
      out2+=("Fasttrack       <small>pacman-mirrors -f5</small>,mb-cli mirrors")
-@@ -238,16 +414,16 @@
+@@ -238,16 +416,16 @@
      elif hash cachyos-kernel-manager 2>/dev/null;then
      out+=("$_RANK_MIRROR,^term(sudo cachyos-rate-mirrors)")
      out+=("^sep()")
@@ -258,7 +260,7 @@
  
  if hash pacman-mirrors 2>/dev/null;then
  if [[ "${updates}" -gt 10 ]];then
-@@ -255,28 +431,33 @@
+@@ -255,28 +433,33 @@
  fi
  fi
  
@@ -300,7 +302,7 @@
      fi
  fi
  
-@@ -312,49 +493,193 @@
+@@ -312,49 +495,196 @@
  	done < <(df -h | grep '^/dev' | grep -v 'boot' | grep -v 'loop' | grep -v '/run/media')
  fi
  
@@ -418,6 +420,9 @@
 +                hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
 +                hash yay 2>/dev/null && opt "yay" "yay -Sc --aur" aur yay
 +                hash pamac 2>/dev/null && opt "pamac" "pamac clean -b" aur pamac
++                if hash fzf 2>/dev/null && has_files "$CE_CACHE/yay" "$CE_CACHE/paru/clone"; then
++                    opt "$_AUR_PICK" "fzf" aur pick
++                fi
 +            fi
 +        fi
 +
@@ -537,7 +542,7 @@
  
  out+=("^sep()")
  out+=("  $_SETTINGS,^checkout(settings)")
-@@ -383,6 +708,7 @@
+@@ -383,6 +713,7 @@
  [[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;mb-status menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;mb-status menu settings")
  out2+=("^sep($_DIR_SIZE_MONITOR)")
  [[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;mb-status menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;mb-status menu settings")
@@ -545,7 +550,7 @@
  out2+=("^sep($_ICON_COLORS)")
  icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
  out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
-@@ -412,6 +738,7 @@
+@@ -412,6 +743,7 @@
  #[[ "${COLOR_WARN}" == "${i}" ]] && out3+=("<big>${ron}</big>   <span bgcolor='${i}'>      </span>,mb-status menu settings") || out3+=("<big>${roff}</big>   <span bgcolor='${i}'>      </span>,mb-setvar color_warn=${i} ${CONF_FILE};mb-status menu settings")
  #done
  
@@ -553,7 +558,7 @@
  [[ "$1" == "settings" ]] && out2+=("^sep()" "${arrow_string_left} ${arrow_string_left} ${arrow_string_left},^back()")
  
  
-@@ -424,8 +751,8 @@
+@@ -424,8 +756,8 @@
  [[ "${1}" == "ipc" ]] && POSITION_MODE="ipc"
  [[ "${1}" == "settings" ]] && POSITION_MODE="ipc"
  #notify-send.sh "Pos" "${POSITION_MODE}"
@@ -564,7 +569,7 @@
  [ $(pidof picom) ] && MENU_RADIUS=$jgtools_radius
  [ -z $jgmenu_use_borders ] && menu_border=0
  icons=0
-@@ -472,6 +799,7 @@
+@@ -472,6 +804,7 @@
  [[ "${dirty}" == 1 ]] && msg="<span fgcolor='${WARN_BGCOLOR}'> 󰻌 </span>" || msg="<span fgcolor='${OK_FGCOLOR}'> ${OK_ICON} </span>"
  [[ "${upkgs}" -gt 0 ]] && msg="<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 󰮯 <sup><small><b>${upkgs}</b></small></sup> </span>"
  echo "${msg}"
@@ -574,7 +579,7 @@
  
 --- /dev/null
 +++ b/usr/share/mb-status/mb-status-actions.sh
-@@ -0,0 +1,749 @@
+@@ -0,0 +1,789 @@
 +#!/usr/bin/env bash
 +# Sourced by mb-status. Functions only; `run` in the main script sets -euo pipefail.
 +
@@ -626,6 +631,9 @@
 +_A_ORPH_BACKUP_INFO=$'Kopiuje pliki /etc każdego pakietu do folderu kopii z datą,\npotem usuwa go przez pacman -Rns.'
 +_A_AUR=$'Cache pomocnika AUR'
 +_A_AUR_INFO=$'Pobrane źródła i pliki budowania pakietów AUR.'
++_A_AUR_PICK_HEAD=$'Tab: zaznacz, Enter: potwierdź, Esc: anuluj'
++_A_NOTHING_PICKED=$'Nic nie wybrano.'
++_A_AUR_PICK_INFO=$'Usuwa tylko zaznaczone foldery. Lista zawiera też zainstalowane pakiety:\nich źródła zostaną pobrane ponownie przy następnej aktualizacji.'
 +_A_THUMBS=$'Miniatury'
 +_A_THUMBS_ALL_INFO=$'Wszystkie miniatury. Powstają ponownie po otwarciu folderów.'
 +_A_THUMBS_OLD1=$'Miniatury nieużywane od'
@@ -693,6 +701,9 @@
 +_A_ORPH_BACKUP_INFO=$'Copies each package\'s /etc files to a dated backup folder,\nthen removes it with pacman -Rns.'
 +_A_AUR=$'AUR helper cache'
 +_A_AUR_INFO=$'Downloaded sources and build files of AUR packages.'
++_A_AUR_PICK_HEAD=$'Tab: select, Enter: confirm, Esc: cancel'
++_A_NOTHING_PICKED=$'Nothing selected.'
++_A_AUR_PICK_INFO=$'Removes only the selected folders. The list includes installed\npackages: their sources are fetched again on the next update.'
 +_A_THUMBS=$'Thumbnails'
 +_A_THUMBS_ALL_INFO=$'All thumbnails. They are recreated when folders are opened.'
 +_A_THUMBS_OLD1=$'Thumbnails not used for'
@@ -986,6 +997,33 @@
 +    flow
 +}
 +
++MABOX_BANNER='███╗   ███╗ █████╗ ██████╗  ██████╗ ██╗  ██╗
++████╗ ████║██╔══██╗██╔══██╗██╔═══██╗╚██╗██╔╝
++██╔████╔██║███████║██████╔╝██║   ██║ ╚███╔╝
++██║╚██╔╝██║██╔══██║██╔══██╗██║   ██║ ██╔██╗
++██║ ╚═╝ ██║██║  ██║██████╔╝╚██████╔╝██╔╝ ██╗
++╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝'
++
++# fzf list of package build folders; sets PICKED to the chosen paths
++aur_pick() {
++    local d b p
++    local -a lines=()
++    PICKED=()
++    for d in "$CE_CACHE/yay" "$CE_CACHE/paru/clone"; do
++        [[ -d $d && ! -L $d ]] || continue
++        while IFS=$'\t' read -r b p; do
++            p=${p%/}
++            [[ -d $p && ! -L $p && ${p##*/} =~ ^[A-Za-z0-9._@+-]+$ ]] || continue
++            lines+=("$b"$'\t'"$(human "$b")"$'\t'"${p#"$CE_CACHE"/}"$'\t'"$p")
++        done < <(du -sb -- "$d"/*/ 2>/dev/null)
++    done
++    ((${#lines[@]})) || return 0
++    mapfile -t PICKED < <(printf '%s\n' "${lines[@]}" | sort -rn |
++        cut -f2- | fzf -m --delimiter=$'\t' --with-nth=1,2 --layout=reverse \
++            --header="$MABOX_BANNER"$'\n\n'"$_A_AUR_PICK_HEAD"$'\n' |
++        cut -f3)
++}
++
 +act_aur() {
 +    TITLE="$_A_AUR"
 +    INFO="$_A_AUR_INFO"
@@ -993,6 +1031,13 @@
 +        paru) need paru; CMD=(paru -Sc --aur); MEASURE=("$CE_CACHE/paru") ;;
 +        yay) need yay; CMD=(yay -Sc --aur); MEASURE=("$CE_CACHE/yay") ;;
 +        pamac) need pamac; CMD=(pamac clean -b); MEASURE=("/var/tmp/pamac-build-$USER") ;;
++        pick)
++            need fzf
++            aur_pick
++            if ((${#PICKED[@]} == 0)); then echo "$_A_NOTHING_PICKED"; pause; return 0; fi
++            INFO="$_A_AUR_PICK_INFO"
++            DRY=(printf '  %s\n' "${PICKED[@]#"$CE_CACHE"/}")
++            CMD=(rm -rf -- "${PICKED[@]}"); MEASURE=("${PICKED[@]}") ;;
 +        *) echo "unknown mode: $1"; exit 2 ;;
 +    esac
 +    flow
