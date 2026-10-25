@@ -415,6 +415,13 @@ $INFO"
     flow
 }
 
+MABOX_BANNER='███╗   ███╗ █████╗ ██████╗  ██████╗ ██╗  ██╗
+████╗ ████║██╔══██╗██╔══██╗██╔═══██╗╚██╗██╔╝
+██╔████╔██║███████║██████╔╝██║   ██║ ╚███╔╝
+██║╚██╔╝██║██╔══██║██╔══██╗██║   ██║ ██╔██╗
+██║ ╚═╝ ██║██║  ██║██████╔╝╚██████╔╝██╔╝ ██╗
+╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝''
+
 # fzf list of package build folders; sets PICKED to the chosen paths
 aur_pick() {
     local d b p
@@ -430,7 +437,7 @@ aur_pick() {
     done
     ((${#lines[@]})) || return 0
     mapfile -t PICKED < <(printf '%s\n' "${lines[@]}" | sort -rn |
-        cut -f2- | fzf -m --delimiter=$'\t' --with-nth=1,2 --header="$_A_AUR_PICK_HEAD" |
+        cut -f2- | fzf -m --delimiter=$'\t' --with-nth=1,2 --header="$MABOX_BANNER"$'\n\n'"$_A_AUR_PICK_HEAD" |
         cut -f3)
 }
 
