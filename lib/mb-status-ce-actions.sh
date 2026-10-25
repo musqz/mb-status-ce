@@ -7,6 +7,7 @@ CE_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}"
 CE_TRASH="${XDG_DATA_HOME:-$HOME/.local/share}/Trash"
 CE_APPUPD="$CE_CACHE/mb-status-ce/app-updates"
 
+DYNAMIC=1 # menu hides rows with nothing to clean; set from dynamic_menu
 bold=$'\e[1m'; red=$'\e[31m'; dim=$'\e[2m'; rst=$'\e[0m'
 
 case $LANG in
@@ -489,17 +490,25 @@ act_dev() {
 
 snap_old() { snap list --all | awk '/disabled/{print $1, $3}'; }
 
-# the checks below back the menu rows: true only when the action would find something
+# the checks below back the menu rows: true only when the action would find something;
+# with DYNAMIC=0 they only test that the tool exists
+dyn_has() { ((!DYNAMIC)) || has_files "$@"; }
+
 has_files() { [[ -n $(find "$@" -type f -print -quit 2>/dev/null) ]]; }
 
-snap_has_old() { app_usable snap && [[ -n $(snap_old 2>/dev/null) ]]; }
+snap_has_old() {
+    ((DYNAMIC)) || { hash snap 2>/dev/null; return; }
+    app_usable snap && [[ -n $(snap_old 2>/dev/null) ]]
+}
 
 flatpak_unused() {
     hash flatpak 2>/dev/null || return 1
+    ((DYNAMIC)) || return 0
     LC_ALL=C timeout 5 flatpak uninstall --unused --assumeno 2>&1 </dev/null | grep -q -E '^ *1\.'
 }
 
 docker_prunable() {
+    ((DYNAMIC)) || { hash docker 2>/dev/null; return; }
     hash docker 2>/dev/null && timeout 3 docker info >/dev/null 2>&1 || return 1
     [[ -n $(timeout 3 docker ps -aq -f status=exited -f status=created 2>/dev/null) ||
        -n $(timeout 3 docker images -qf dangling=true 2>/dev/null) ]]
@@ -507,13 +516,13 @@ docker_prunable() {
 
 dev_has() { # tool
     case $1 in
-        go) hash go 2>/dev/null && has_files "$(go env GOCACHE)" ;;
-        gomod) hash go 2>/dev/null && has_files "$(go env GOMODCACHE)" ;;
-        npm) hash npm 2>/dev/null && has_files "${npm_config_cache:-$HOME/.npm}/_cacache" ;;
-        cargo) hash cargo-cache 2>/dev/null && has_files "${CARGO_HOME:-$HOME/.cargo}/registry" ;;
-        pip) hash pip 2>/dev/null && has_files "$CE_CACHE/pip" ;;
-        yarn) hash yarn 2>/dev/null && has_files "$CE_CACHE/yarn" ;;
-        pnpm) hash pnpm 2>/dev/null && has_files "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" ;;
+        go) hash go 2>/dev/null && { ((!DYNAMIC)) || has_files "$(go env GOCACHE)"; } ;;
+        gomod) hash go 2>/dev/null && { ((!DYNAMIC)) || has_files "$(go env GOMODCACHE)"; } ;;
+        npm) hash npm 2>/dev/null && dyn_has "${npm_config_cache:-$HOME/.npm}/_cacache" ;;
+        cargo) hash cargo-cache 2>/dev/null && dyn_has "${CARGO_HOME:-$HOME/.cargo}/registry" ;;
+        pip) hash pip 2>/dev/null && dyn_has "$CE_CACHE/pip" ;;
+        yarn) hash yarn 2>/dev/null && dyn_has "$CE_CACHE/yarn" ;;
+        pnpm) hash pnpm 2>/dev/null && dyn_has "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" ;;
     esac
 }
 
