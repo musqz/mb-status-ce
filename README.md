@@ -85,7 +85,6 @@ PREFIX=/usr SUDO=sudo ./install.sh
 
 Use the same `PREFIX` and `SUDO` as for the install. Your config `~/.config/mabox/mb-status-ce.conf` is kept.
 
-If an earlier version installed the timer, remove it: `systemctl --user disable --now mb-status-ce-appcheck.timer`, then delete the two `mb-status-ce-appcheck.*` unit files.
 
 ## Mabox build
 
