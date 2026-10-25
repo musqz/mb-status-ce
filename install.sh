@@ -8,18 +8,13 @@ SRC=$(cd "$(dirname "$0")" && pwd)
 if [[ -n ${PREFIX:-} ]]; then
     BIN="$PREFIX/bin/mb-status-ce"
     LIB="$PREFIX/share/mb-status-ce"
-    UNITS="$PREFIX/lib/systemd/user"
 else
     BIN="$HOME/bin/mb-status-ce"
     LIB="$HOME/.local/share/mb-status-ce"
-    UNITS="$HOME/.config/systemd/user"
 fi
-TIMER=mb-status-ce-appcheck
 
 if [[ "${1:-}" == --uninstall ]]; then
-    [[ -z ${PREFIX:-} ]] && systemctl --user disable --now "$TIMER.timer" 2>/dev/null || true
-    $SUDO rm -fv "$BIN" "$LIB/mb-status-ce-actions.sh" "$UNITS/$TIMER.service" "$UNITS/$TIMER.timer"
-    [[ -z ${PREFIX:-} ]] && systemctl --user daemon-reload || true
+    $SUDO rm -fv "$BIN" "$LIB/mb-status-ce-actions.sh"
     $SUDO rmdir -v "$LIB" 2>/dev/null || true
     exit 0
 fi
@@ -35,16 +30,6 @@ $SUDO install -Dm755 "$SRC/mb-status-ce" "$BIN"
 $SUDO install -Dm644 "$SRC/lib/mb-status-ce-actions.sh" "$LIB/mb-status-ce-actions.sh"
 echo "installed $BIN"
 echo "installed $LIB/mb-status-ce-actions.sh"
-
-sed "s|@BIN@|$BIN|" "$SRC/systemd/user/$TIMER.service" | $SUDO install -Dm644 /dev/stdin "$UNITS/$TIMER.service"
-$SUDO install -Dm644 "$SRC/systemd/user/$TIMER.timer" "$UNITS/$TIMER.timer"
-echo "installed $UNITS/$TIMER.{service,timer}"
-if [[ -z ${PREFIX:-} ]]; then
-    systemctl --user daemon-reload && systemctl --user enable --now "$TIMER.timer" ||
-        echo "warning: timer not enabled, run: systemctl --user enable --now $TIMER.timer" >&2
-else
-    echo "enable with: systemctl --user daemon-reload; systemctl --user enable --now $TIMER.timer"
-fi
 
 case ":$PATH:" in
     *":${BIN%/*}:"*) ;;
