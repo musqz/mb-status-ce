@@ -551,7 +551,13 @@ act_dev() {
     flow
 }
 
-snap_old() { snap list --all | awk '/disabled/{print $1, $3}'; }
+snap_old() { snap list --all 2>/dev/null | awk '/disabled/{print $1, $3}'; }
+snap_old_files() { snap_old | while read -r name rev; do echo "/var/lib/snapd/snaps/${name}_${rev}.snap"; done; }
+snap_old_bytes() {
+    local f
+    mapfile -t f < <(snap_old_files)
+    ((${#f[@]})) && bytes_of "${f[@]}" || echo 0
+}
 
 # the checks below back the menu rows: true only when the action would find something;
 # with DYNAMIC=0 they only test that the tool exists
@@ -662,7 +668,7 @@ act_containers() {
             INFO="$_A_SNAP_INFO"
             DRY=(snap_old); CMD=(snap_remove_old)
             SHOW="sudo snap remove <name> --revision=<$_A_OLD_REVISION>"
-            MEASURE=(/var/lib/snapd/snaps) ;;
+            mapfile -t MEASURE < <(snap_old_files) ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
     flow

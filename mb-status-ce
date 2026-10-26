@@ -628,7 +628,7 @@ fi
                 case $t in
                     docker) opt "docker" "system prune" containers docker ;;
                     flatpak) opt "flatpak" "uninstall --unused" containers flatpak ;;
-                    snap) opt "snap" "$_REMOVE_OLD_REVS" containers snap ;;
+                    snap) opt "snap" "$_REMOVE_OLD_REVS$(app_usable snap && echo "  $(human "$(snap_old_bytes)")")" containers snap ;;
                 esac
             done
         fi
