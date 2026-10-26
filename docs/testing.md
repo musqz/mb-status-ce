@@ -1,6 +1,6 @@
 # Testing mb-status-ce
 
-`mb-status-ce` is the Mabox `mb-status` panel menu with a cleanup section: journal logs, pacman cache, orphan packages, AUR helper cache, thumbnails and `~/.cache`, trash, developer caches, containers, quickemu VMs and leftover configs. Rows with nothing to clean are hidden.
+`mb-status-ce` is the Mabox `mb-status` panel menu with a cleanup section: journal logs, pacman cache, orphan packages, AUR helper cache, thumbnails and `~/.cache`, developer caches, containers, quickemu VMs, leftover configs and trash. Rows with nothing to clean are hidden.
 
 Testers wanted. Use it for a while, then tell me what you miss, what is confusing and what broke.
 

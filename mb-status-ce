@@ -581,13 +581,6 @@ fi
             opt "$_STALE_FILES" "$_UNTOUCHED $(conf_days cache_days 30) $_DAYS_AGO" cache
         fi
 
-        if ((!DYNAMIC)) || [[ -n $(find "$CE_TRASH/files" "$CE_TRASH/expunged" -mindepth 1 -print -quit 2>/dev/null) ]]; then
-            item "$_TRASH" "$(size_span "$tb")" trash
-            sub trash "$_TRASH"
-            out2+=("$_OPEN $_TRASH,pcmanfm trash://")
-            bad "$_EMPTY $_TRASH" "find ... -delete" trash
-        fi
-
         # tools whose cache dir holds data
         local dev=()
         dev_has go && dev+=(go)
@@ -678,6 +671,13 @@ fi
                 opt "$_LIST_FILES" "pacdiff -o" leftover list
                 hash meld 2>/dev/null && opt "$_REVIEW_MERGE" "pacdiff + meld" leftover merge
             fi
+        fi
+
+        if ((!DYNAMIC)) || [[ -n $(find "$CE_TRASH/files" "$CE_TRASH/expunged" -mindepth 1 -print -quit 2>/dev/null) ]]; then
+            item "$_TRASH" "$(size_span "$tb")" trash
+            sub trash "$_TRASH"
+            out2+=("$_OPEN $_TRASH,pcmanfm trash://")
+            bad "$_EMPTY $_TRASH" "find ... -delete" trash
         fi
 
         # no cleanup row left: the header becomes a plain separator above Downloads
