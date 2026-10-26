@@ -616,12 +616,14 @@ fi
             done
         fi
 
-        local cont=()
+        local cont=() sz
         docker_prunable && cont+=(docker)
         flatpak_unused && cont+=(flatpak)
         snap_has_old && cont+=(snap)
         if ((${#cont[@]})); then
-            item "$_CONTAINERS" "" containers
+            sz=""
+            [[ " ${cont[*]} " == *" snap "* ]] && app_usable snap && sz=$(size_span "$(snap_old_bytes)")
+            item "$_CONTAINERS" "$sz" containers
             sub containers "$_CONTAINERS"
             info "$_CONT_INFO1" "$_CONT_INFO2"
             for t in "${cont[@]}"; do
