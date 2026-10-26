@@ -52,7 +52,7 @@ fi
 disk_limit=${disk_limit:-70}
 big_pkgs=${big_pkgs:-20}
 dir_size_monitor=${dir_size_monitor:-y}
-DYNAMIC=0; [[ ${dynamic_menu:-y} == y ]] && DYNAMIC=1
+DYNAMIC=0; [[ $(conf_get dynamic_menu "${dynamic_menu:-y}") == y ]] && DYNAMIC=1
 OK_ICON=${ok_icon:-"󰕥"}
 OK_FGCOLOR=${ok_fgcolor:-"#008000"}
 WARN_FGCOLOR=${warn_fgcolor:-"#FFFFFF"}
@@ -713,7 +713,7 @@ out2+=("^sep($_DU_ALERT_LEVEL)")
 [[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;$SELF menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;$SELF menu settings")
 out2+=("^sep($_DIR_SIZE_MONITOR)")
 [[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;$SELF menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;$SELF menu settings")
-[[ "${dynamic_menu:-y}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n;$SELF menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y;$SELF menu settings")
+[[ $DYNAMIC == 1 ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n $CE_CONF;$SELF menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y $CE_CONF;$SELF menu settings")
 out2+=("^sep($_ICON_COLORS)")
 icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
 out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
