@@ -21,8 +21,8 @@ Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
 
 <table>
 <tr>
-<td align="center"><img src="docs/preview.png" width="260" alt="mb-status-ce preview"><br>Full menu</td>
-<td align="center"><img src="docs/slim.png" width="260" alt="mb-status-ce slim menu"><br>Slim menu (monitor off) and Settings</td>
+<td align="center"><img src="docs/preview.png" width="260" alt="mb-status-ce preview"><br>Full menu (monitor off) </td>
+<td align="center"><img src="docs/slim.png" width="260" alt="mb-status-ce slim menu"><br>Slim menu (monitor off) + Settings</td>
 <td align="center"><img src="docs/thumbnails.png" width="260" alt="mb-status-ce thumbnails and cache"><br>Thumbnails / .cache</td>
 </tr>
 <tr>
