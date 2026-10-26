@@ -704,12 +704,12 @@ act_vm() {
 
 appupd_get() { local v; v=$(sed -n "s/^$1=//p" "$CE_APPUPD" 2>/dev/null | tail -n1 || true); echo "${v:-0}"; } # flatpak | snap
 
-# a failed check keeps the last known count
+# only ticked apps are checked; a failed check keeps the last known count
 act_appcheck() {
     local f s tmp
     f=$(appupd_get flatpak); s=$(appupd_get snap)
-    app_usable flatpak && { f=$(set -o pipefail; timeout 60 flatpak remote-ls --updates --columns=application 2>/dev/null | sort -u | wc -l) || f=$(appupd_get flatpak); }
-    if app_usable snap; then
+    app_usable flatpak && app_update_on flatpak && { f=$(set -o pipefail; timeout 60 flatpak remote-ls --updates --columns=application 2>/dev/null | sort -u | wc -l) || f=$(appupd_get flatpak); }
+    if app_usable snap && app_update_on snap; then
         s=$(set -o pipefail; timeout 20 snap refresh --list 2>/dev/null | tail -n +2 | wc -l) || s=$(appupd_get snap)
     fi
     mkdir -p "${CE_APPUPD%/*}"
@@ -764,8 +764,10 @@ act_sysupdate() {
     if app_update_on snap && app_usable snap; then
         echo; sudo snap refresh || echo "${red}snap refresh $_A_FAILED${rst}"
     fi
-    echo; echo "$_A_CHECKING"
-    act_appcheck
+    if { app_update_on flatpak && app_usable flatpak; } || { app_update_on snap && app_usable snap; }; then
+        echo; echo "$_A_CHECKING"
+        act_appcheck
+    fi
     echo
     pause
 }
