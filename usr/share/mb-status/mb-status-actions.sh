@@ -458,11 +458,17 @@ act_aur() {
         pamac) need pamac; CMD=(pamac clean -b); MEASURE=("/var/tmp/pamac-build-$USER") ;;
         pick)
             need fzf
-            aur_pick
-            if ((${#PICKED[@]} == 0)); then echo "$_A_NOTHING_PICKED"; pause; return 0; fi
-            INFO="$_A_AUR_PICK_INFO"
-            DRY=(printf '  %s\n' "${PICKED[@]#"$CE_CACHE"/}")
-            CMD=(rm -rf -- "${PICKED[@]}"); MEASURE=("${PICKED[@]}") ;;
+            local rounds=0
+            # back to the list after each removal or cancelled confirm; Esc or an empty selection ends it
+            while aur_pick; ((${#PICKED[@]})); do
+                rounds=1
+                INFO="$_A_AUR_PICK_INFO"
+                DRY=(printf '  %s\n' "${PICKED[@]#"$CE_CACHE"/}")
+                CMD=(rm -rf -- "${PICKED[@]}"); MEASURE=("${PICKED[@]}")
+                flow
+            done
+            ((rounds)) || { echo "$_A_NOTHING_PICKED"; pause; }
+            return 0 ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac
     flow
