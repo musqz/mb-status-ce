@@ -25,6 +25,11 @@ Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
 <td align="center"><img src="docs/slim.png" width="260" alt="mb-status-ce slim menu"><br>Slim menu (monitor off) and Settings</td>
 <td align="center"><img src="docs/thumbnails.png" width="260" alt="mb-status-ce thumbnails and cache"><br>Thumbnails / .cache</td>
 </tr>
+<tr>
+<td align="center"><img src="docs/aur-pick.png" width="260" alt="mb-status-ce AUR cache picker"><br>AUR helper cache: choose packages to remove (fzf)</td>
+<td align="center"><img src="docs/menu-full.png" width="260" alt="mb-status-ce full menu with settings"><br>Full menu and Settings</td>
+<td></td>
+</tr>
 </table>
 
 Entries for tools that are not installed are hidden:
