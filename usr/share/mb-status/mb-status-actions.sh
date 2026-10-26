@@ -49,6 +49,7 @@ _A_BACKUP_THEN=$'potem'
 _A_ORPH_BACKUP_INFO=$'Kopiuje pliki /etc każdego pakietu do folderu kopii z datą,\npotem usuwa go przez pacman -Rns.'
 _A_AUR=$'Cache pomocnika AUR'
 _A_AUR_INFO=$'Pobrane źródła i pliki budowania pakietów AUR.'
+_A_AUR_PICK_SUB=$'Usuń pakiety z cache pomocnika AUR'
 _A_AUR_PICK_HEAD=$'Tab: zaznacz, Enter: potwierdź, Esc: anuluj'
 _A_NOTHING_PICKED=$'Nic nie wybrano.'
 _A_AUR_PICK_INFO=$'Usuwa tylko zaznaczone foldery. Lista zawiera też zainstalowane pakiety:\nich źródła zostaną pobrane ponownie przy następnej aktualizacji.'
@@ -119,6 +120,7 @@ _A_BACKUP_THEN=$'then'
 _A_ORPH_BACKUP_INFO=$'Copies each package\'s /etc files to a dated backup folder,\nthen removes it with pacman -Rns.'
 _A_AUR=$'AUR helper cache'
 _A_AUR_INFO=$'Downloaded sources and build files of AUR packages.'
+_A_AUR_PICK_SUB=$'Remove AUR helper cache packages'
 _A_AUR_PICK_HEAD=$'Tab: select, Enter: confirm, Esc: cancel'
 _A_NOTHING_PICKED=$'Nothing selected.'
 _A_AUR_PICK_INFO=$'Removes only the selected folders. The list includes installed\npackages: their sources are fetched again on the next update.'
@@ -438,7 +440,7 @@ aur_pick() {
     ((${#lines[@]})) || return 0
     mapfile -t PICKED < <(printf '%s\n' "${lines[@]}" | sort -rn |
         cut -f2- | fzf -m --delimiter=$'\t' --with-nth=1,2 --layout=reverse \
-            --header="$MABOX_BANNER"$'\n\n'"$_A_AUR_PICK_HEAD"$'\n' |
+            --header="$MABOX_BANNER"$'\n'"$_A_AUR_PICK_SUB"$'\n\n'"$_A_AUR_PICK_HEAD"$'\n' |
         cut -f3)
 }
 
