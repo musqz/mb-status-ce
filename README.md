@@ -66,6 +66,20 @@ Deleting a VM asks first and shows what goes:
 - `qemu_dir`: folders with quickemu VMs (`<name>.conf` next to a `<name>/` folder), comma separated, default `~/emu`. Example: `qemu_dir=~/emu, /mnt/data_work/emu`.
 - `dynamic_menu`: `y` hides cleanup rows with nothing to clean, `n` shows every row of the tools you have installed (checkbox in Settings).
 
+### Default config
+
+```
+# mb-status-ce cleanup settings
+# days without access/modification before a file in ~/.cache counts as stale
+cache_days=30
+# same for ~/.cache/thumbnails
+thumb_days=14
+# top-level names in ~/.cache that are never touched (space separated)
+cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status-ce fontconfig
+# folders with quickemu VMs, comma separated (<name>.conf next to a <name>/ folder)
+qemu_dir=~/emu
+```
+
 The pending flatpak and snap counts refresh in the background when the panel updates, at most every 3 hours. Run the check now with `mb-status-ce run appcheck`.
 
 ## Install
@@ -92,19 +106,6 @@ PREFIX=/usr SUDO=sudo ./install.sh
 
 Use the same `PREFIX` and `SUDO` as for the install. Your config `~/.config/mabox/mb-status-ce.conf` is kept.
 
-## Cleanup config default
-
-```
-# mb-status-ce cleanup settings
-# days without access/modification before a file in ~/.cache counts as stale
-cache_days=30
-# same for ~/.cache/thumbnails
-thumb_days=14
-# top-level names in ~/.cache that are never touched (space separated)
-cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status-ce fontconfig
-# folders with quickemu VMs, comma separated (<name>.conf next to a <name>/ folder)
-qemu_dir=~/emu
-```
 
 ## Mabox build
 
