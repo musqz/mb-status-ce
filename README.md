@@ -92,6 +92,19 @@ PREFIX=/usr SUDO=sudo ./install.sh
 
 Use the same `PREFIX` and `SUDO` as for the install. Your config `~/.config/mabox/mb-status-ce.conf` is kept.
 
+# Cleanup config default
+
+```
+# mb-status-ce cleanup settings
+# days without access/modification before a file in ~/.cache counts as stale
+cache_days=30
+# same for ~/.cache/thumbnails
+thumb_days=14
+# top-level names in ~/.cache that are never touched (space separated)
+cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status-ce fontconfig
+# folders with quickemu VMs, comma separated (<name>.conf next to a <name>/ folder)
+qemu_dir=~/emu
+```
 
 ## Mabox build
 
