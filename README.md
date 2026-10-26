@@ -92,7 +92,7 @@ PREFIX=/usr SUDO=sudo ./install.sh
 
 Use the same `PREFIX` and `SUDO` as for the install. Your config `~/.config/mabox/mb-status-ce.conf` is kept.
 
-# Cleanup config default
+## Cleanup config default
 
 ```
 # mb-status-ce cleanup settings
