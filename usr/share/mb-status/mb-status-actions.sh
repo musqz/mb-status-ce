@@ -166,6 +166,11 @@ cache_days=30
 thumb_days=14
 # top-level names in ~/.cache that are never touched (space separated)
 cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status fontconfig
+# Update flatpak / snap checkboxes (y or n)
+update_flatpak=n
+update_snap=n
+# y hides cleanup rows with nothing to clean, n shows every row of the installed tools
+dynamic_menu=y
 # folders with quickemu VMs, comma separated (<name>.conf next to a <name>/ folder)
 qemu_dir=~/emu
 EOF

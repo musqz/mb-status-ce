@@ -27,7 +27,7 @@
  disk_limit=${disk_limit:-70}
  big_pkgs=${big_pkgs:-20}
 +dir_size_monitor=${dir_size_monitor:-y}
-+DYNAMIC=0; [[ ${dynamic_menu:-y} == y ]] && DYNAMIC=1
++DYNAMIC=0; [[ $(conf_get dynamic_menu "${dynamic_menu:-y}") == y ]] && DYNAMIC=1
  OK_ICON=${ok_icon:-"󰕥"}
  OK_FGCOLOR=${ok_fgcolor:-"#008000"}
  WARN_FGCOLOR=${warn_fgcolor:-"#FFFFFF"}
@@ -546,7 +546,7 @@
  [[ "$disk_limit" == "95" ]] && out2+=("<big>${ron}</big>   <span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> 95% </span>,mb-setvar disk_limit=95;mb-status menu settings") || out2+=("<big>${roff}</big>    95%,mb-setvar disk_limit=95;mb-status menu settings")
  out2+=("^sep($_DIR_SIZE_MONITOR)")
  [[ "${dir_size_monitor}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=n;mb-status menu settings") ||out2+=("<big>${cboff}</big>   $_DIR_SIZE_MONITOR,mb-setvar dir_size_monitor=y;mb-status menu settings")
-+[[ "${dynamic_menu:-y}" == "y" ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n;mb-status menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y;mb-status menu settings")
++[[ $DYNAMIC == 1 ]] && out2+=("<big>${cbon}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=n $CE_CONF;mb-status menu settings") || out2+=("<big>${cboff}</big>   $_DYNAMIC_MENU,mb-setvar dynamic_menu=y $CE_CONF;mb-status menu settings")
  out2+=("^sep($_ICON_COLORS)")
  icons=("󰕥" "󰞑" "" "" "" "" "󰸞")
  out2+=("<span fgcolor='${OK_FGCOLOR}'><big>${OK_ICON}</big></span>   $_ICON_OK,^checkout(icon)")
@@ -579,7 +579,7 @@
  
 --- /dev/null
 +++ b/usr/share/mb-status/mb-status-actions.sh
-@@ -0,0 +1,791 @@
+@@ -0,0 +1,796 @@
 +#!/usr/bin/env bash
 +# Sourced by mb-status. Functions only; `run` in the main script sets -euo pipefail.
 +
@@ -748,6 +748,11 @@
 +thumb_days=14
 +# top-level names in ~/.cache that are never touched (space separated)
 +cache_ignore=borg betterlockscreen mozilla firefox floorp waterfox firedragon zen chromium google-chrome BraveSoftware vivaldi librewolf paru yay pamac mabox jgmenu mb-status fontconfig
++# Update flatpak / snap checkboxes (y or n)
++update_flatpak=n
++update_snap=n
++# y hides cleanup rows with nothing to clean, n shows every row of the installed tools
++dynamic_menu=y
 +# folders with quickemu VMs, comma separated (<name>.conf next to a <name>/ folder)
 +qemu_dir=~/emu
 +EOF
