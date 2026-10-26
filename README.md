@@ -62,9 +62,10 @@ Deleting a VM asks first and shows what goes:
 - `cache_days`: days without access before a file in `~/.cache` counts as stale.
 - `thumb_days`: same for `~/.cache/thumbnails`.
 - `cache_ignore`: names in `~/.cache` that are never touched.
-- `update_flatpak`, `update_snap`: the checkboxes (`y` or `n`).
+- `update_flatpak`, `update_snap`: the checkboxes (`y` or `n`). Added to the file when you tick a box.
 - `qemu_dir`: folders with quickemu VMs (`<name>.conf` next to a `<name>/` folder), comma separated, default `~/emu`. Example: `qemu_dir=~/emu, /mnt/data_work/emu`.
-- `dynamic_menu`: `y` hides cleanup rows with nothing to clean, `n` shows every row of the tools you have installed (checkbox in Settings).
+
+The *Directory size monitor* and *Dynamic menu* checkboxes in Settings are stored in `~/.config/mabox/mabox.conf` (`dir_size_monitor`, `dynamic_menu`; `y` or `n`), not in this file.
 
 ### Default config
 
