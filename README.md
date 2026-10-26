@@ -27,7 +27,7 @@ Fork of Mabox `mb-status` (jgmenu status menu). Same menu, plus:
 </tr>
 <tr>
 <td align="center"><img src="docs/aur-pick.png" width="260" alt="mb-status-ce AUR cache picker"><br>AUR helper cache: choose packages to remove (fzf)</td>
-<td align="center"><img src="docs/menu-full.png" width="260" alt="mb-status-ce full menu with settings"><br>Full menu and Settings</td>
+<td align="center"><img src="docs/menu-full.png" width="260" alt="mb-status-ce full menu with settings"><br>Full menu + settings</td>
 <td align="center"><img src="docs/slim-menu.png" width="260" alt="mb-status-ce slim menu"><br>Slim menu</td>
 </tr>
 </table>
