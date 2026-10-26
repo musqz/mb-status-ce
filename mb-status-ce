@@ -616,13 +616,15 @@ fi
             done
         fi
 
-        local cont=() sz
+        local cont=() sz sb
         docker_prunable && cont+=(docker)
         flatpak_unused && cont+=(flatpak)
         snap_has_old && cont+=(snap)
         if ((${#cont[@]})); then
-            sz=""
-            [[ " ${cont[*]} " == *" snap "* ]] && app_usable snap && sz=$(size_span "$(snap_old_bytes)")
+            sb=""; sz=""
+            if [[ " ${cont[*]} " == *" snap "* ]] && app_usable snap; then
+                sb=$(snap_old_bytes); sz=$(size_span "$sb")
+            fi
             item "$_CONTAINERS" "$sz" containers
             sub containers "$_CONTAINERS"
             info "$_CONT_INFO1" "$_CONT_INFO2"
@@ -630,7 +632,7 @@ fi
                 case $t in
                     docker) opt "docker" "system prune" containers docker ;;
                     flatpak) opt "flatpak" "uninstall --unused" containers flatpak ;;
-                    snap) opt "snap" "$_REMOVE_OLD_REVS$(app_usable snap && echo "  $(human "$(snap_old_bytes)")")" containers snap ;;
+                    snap) opt "snap" "$_REMOVE_OLD_REVS${sb:+  $(human "$sb")}" containers snap ;;
                 esac
             done
         fi
