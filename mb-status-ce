@@ -83,7 +83,7 @@ left(){
     menu ipc
 }
 
-# size_span <bytes> [plain]: warn colour from 1G up, ok icon when (nearly) empty; "plain" skips the warn colour for rows that aren't cleanup candidates (AUR cache, VMs)
+# size_span <bytes> [plain]: warn colour from 1G up, ok icon when (nearly) empty; "plain" skips the warn colour for rows with nothing to clean (AUR cache, VMs, pacman cache with nothing to prune)
 size_span() {
     local h
     h=$(human "$1")
@@ -523,13 +523,14 @@ fi
         fi
 
         if ((!DYNAMIC)) || has_files /var/cache/pacman/pkg; then
-            item "$_PACMAN_CACHE" "$(size_span "$pb")" paccache
-            sub paccache "$_PACMAN_CACHE"
-            info "$_PACCACHE_INFO1" "$_PACCACHE_INFO2"
-            local pk3 pk1 pun
+            local pk3 pk1 pun pplain=""
             pk3=$(paccache_bytes -k3)
             pk1=$(paccache_bytes -k1)
             pun=$(paccache_bytes -uk0)
+            ((pk3 <= 0 && pk1 <= 0 && pun <= 0)) && pplain=plain
+            item "$_PACMAN_CACHE" "$(size_span "$pb" $pplain)" paccache
+            sub paccache "$_PACMAN_CACHE"
+            info "$_PACCACHE_INFO1" "$_PACCACHE_INFO2"
             ((!DYNAMIC || pk3 != 0)) && opt "$_KEEP_3_VERSIONS$( ((pk3 > 0)) && echo " ($(human "$pk3"))")" "paccache -rk3" paccache k3
             ((!DYNAMIC || pk1 != 0)) && opt "$_KEEP_1_VERSION$( ((pk1 > 0)) && echo " ($(human "$pk1"))")" "paccache -rk1" paccache k1
             ((!DYNAMIC || pun != 0)) && opt "$_UNINSTALLED_PKGS$( ((pun > 0)) && echo " ($(human "$pun"))")" "paccache -ruk0" paccache uninstalled
