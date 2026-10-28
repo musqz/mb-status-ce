@@ -365,12 +365,12 @@ act_journal() {
             esac
             TITLE="$_A_JOURNAL_LIMIT"; INFO="$_A_JOURNAL_LIMIT_INFO"
             DRY=(); MEASURE_FN=""
-            SHOW="$key=$val > $JOURNAL_DROPIN/90-mb-status-ce-$f.conf"
+            SHOW="$key=$val > $JOURNAL_DROPIN/90-mb-status-ce-$f.conf; systemctl restart systemd-journald"
             CMD=(sudo bash -c 'install -d "$1" && printf "[Journal]\n%s=%s\n" "$2" "$3" > "$1/90-mb-status-ce-$4.conf" && systemctl restart systemd-journald' _ "$JOURNAL_DROPIN" "$key" "$val" "$f") ;;
         reset)
             TITLE="$_A_JOURNAL_LIMIT"; INFO="$_A_JOURNAL_RESET_INFO"
             DRY=(); MEASURE_FN=""
-            SHOW="rm $JOURNAL_DROPIN/90-mb-status-ce-*.conf"
+            SHOW="rm $JOURNAL_DROPIN/90-mb-status-ce-*.conf; systemctl restart systemd-journald"
             CMD=(sudo bash -c 'rm -f "$1"/90-mb-status-ce-*.conf && systemctl restart systemd-journald' _ "$JOURNAL_DROPIN") ;;
         *) echo "unknown mode: $1"; exit 2 ;;
     esac

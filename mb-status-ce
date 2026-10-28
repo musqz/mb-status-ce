@@ -131,7 +131,6 @@ _VACUUM_1DAY="Zachowaj z 1 dnia"
 _VACUUM_7DAYS="Zachowaj z 7 dni"
 _VACUUM_200M="Zachowaj 200M"
 _VACUUM_500M="Zachowaj 500M"
-_JOURNAL_NOW="Teraz"
 _JOURNAL_OLDEST="najstarszy wpis"
 _JOURNAL_LIMIT="limit"
 _JOURNAL_DEFAULT="domyślny"
@@ -241,7 +240,6 @@ _VACUUM_1DAY="Keep 1 day"
 _VACUUM_7DAYS="Keep 7 days"
 _VACUUM_200M="Keep 200M"
 _VACUUM_500M="Keep 500M"
-_JOURNAL_NOW="Now"
 _JOURNAL_OLDEST="oldest entry"
 _JOURNAL_LIMIT="limit"
 _JOURNAL_DEFAULT="default"
@@ -534,22 +532,21 @@ fi
         out+=("^sep($_DIR_SIZE_MONITOR)")
         if ((!DYNAMIC || jb > 0)); then
             item "$_LOGS" "$(size_span "$jb")" journal
-            sub journal "$_JOURNAL_LOGS"
             local jt js jo jl
             jt=$(journal_conf MaxRetentionSec); js=$(journal_conf SystemMaxUse); jo=$(journal_oldest_days)
             jl=${jt:+$jt}${jt:+${js:+ / }}${js:+$js}
-            info "$_JOURNAL_NOW: $(human "$jb")${jo:+, $_JOURNAL_OLDEST: ${jo}d}, $_JOURNAL_LIMIT: ${jl:-$_JOURNAL_DEFAULT}"
+            sub journal "$_JOURNAL_LOGS  <small>$(human "$jb")${jo:+  ·  $_JOURNAL_OLDEST ${jo}d}  ·  $_JOURNAL_LIMIT ${jl:-$_JOURNAL_DEFAULT}</small>"
             info "$_VACUUM_INFO1" "$_VACUUM_INFO2"
             opt "$_VACUUM_1DAY" "journalctl --vacuum-time=1d" journal 1d
             opt "$_VACUUM_7DAYS" "journalctl --vacuum-time=7d" journal 7d
             opt "$_VACUUM_200M" "journalctl --vacuum-size=200M" journal 200M
             opt "$_VACUUM_500M" "journalctl --vacuum-size=500M" journal 500M
             out2+=("^sep()")
-            opt "$_LIMIT_3DAYS" "MaxRetentionSec" journal t3
-            opt "$_LIMIT_7DAYS" "MaxRetentionSec" journal t7
-            opt "$_LIMIT_30DAYS" "MaxRetentionSec" journal t30
-            opt "$_LIMIT_200M" "SystemMaxUse" journal s200
-            opt "$_LIMIT_500M" "SystemMaxUse" journal s500
+            opt "$([[ $jt == 3day ]] && echo "● ")$_LIMIT_3DAYS" "MaxRetentionSec" journal t3
+            opt "$([[ $jt == 7day ]] && echo "● ")$_LIMIT_7DAYS" "MaxRetentionSec" journal t7
+            opt "$([[ $jt == 30day ]] && echo "● ")$_LIMIT_30DAYS" "MaxRetentionSec" journal t30
+            opt "$([[ $js == 200M ]] && echo "● ")$_LIMIT_200M" "SystemMaxUse" journal s200
+            opt "$([[ $js == 500M ]] && echo "● ")$_LIMIT_500M" "SystemMaxUse" journal s500
             compgen -G "$JOURNAL_DROPIN/90-mb-status-ce-*.conf" >/dev/null && opt "$_LIMIT_REMOVE" "journald.conf.d" journal reset
         fi
 
