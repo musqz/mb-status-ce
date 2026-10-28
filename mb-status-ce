@@ -83,11 +83,11 @@ left(){
     menu ipc
 }
 
-# size_span <bytes>: warn colour from 1G up, ok icon when (nearly) empty
+# size_span <bytes> [plain]: warn colour from 1G up, ok icon when (nearly) empty; "plain" skips the warn colour for rows that aren't cleanup candidates (AUR cache, VMs)
 size_span() {
     local h
     h=$(human "$1")
-    if [[ $h == *[GT] || $h == *[GT]i ]]; then
+    if [[ ${2:-} != plain && ( $h == *[GT] || $h == *[GT]i ) ]]; then
         echo "<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${h} </span>"
     elif [[ $h == *K || $h == 0 ]]; then
         echo "<span fgcolor='${OK_FGCOLOR}'>   </span>"
@@ -560,7 +560,7 @@ fi
         if ((${#aurs[@]})); then
             if ((!DYNAMIC)) || has_files "${aurdirs[@]}"; then
                 aurb=$(bytes_of "${aurdirs[@]}")
-                item "$_AUR_CACHE" "$(size_span "$aurb")" aur
+                item "$_AUR_CACHE" "$(size_span "$aurb" plain)" aur
                 sub aur "$_AUR_CACHE"
                 info "$_AUR_INFO"
                 hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
@@ -637,7 +637,7 @@ fi
                 vmtot=$((vmtot + vmb))
                 vml+=("$vmb $v")
             done
-            item "$_VMS" "$(size_span "$vmtot")" vm
+            item "$_VMS" "$(size_span "$vmtot" plain)" vm
             sub vm "$_VMS"
             info "$_VM_INFO"
             if ((${#vml[@]})); then
