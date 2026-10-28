@@ -33,6 +33,9 @@ _A_FAILED=$'nie powiodło się.'
 _A_SOME_NOT_REMOVED=$'nie udało się usunąć niektórych elementów'
 _A_JOURNAL=$'Logi journala'
 _A_JOURNAL_INFO=$'Wpisy dziennika ponad limit są usuwane. Ostatnie wpisy,\nw tym dane o ostatniej awarii, zostają.'
+_A_JOURNAL_LIMIT=$'Stały limit logów'
+_A_JOURNAL_LIMIT_INFO=$'Zapisuje limit w drop-inie journald. Journald pilnuje go sam,\ndopóki go nie zmienisz lub nie usuniesz.'
+_A_JOURNAL_RESET_INFO=$'Usuwa stały limit. Journald wraca do domyślnych ustawień.'
 _A_PACCACHE=$'Cache pacmana'
 _A_PACCACHE_INFO=$'Stare pliki pakietów w /var/cache/pacman/pkg. Aktualizacje rolling\nczasem wymagają powrotu do starszej wersji: zachowaj co najmniej 1-2 wersje.'
 _A_PACCACHE_ALL=$'Usuwa wszystkie pliki pakietów z cache. Później nie będzie\nmożna wrócić do starszej wersji. Dalej pacman zada własne pytania.'
@@ -104,6 +107,9 @@ _A_FAILED=$'failed.'
 _A_SOME_NOT_REMOVED=$'some items could not be removed'
 _A_JOURNAL=$'Journal logs'
 _A_JOURNAL_INFO=$'Journal entries beyond the limit are deleted. Recent entries,\nincluding the last crash info, stay.'
+_A_JOURNAL_LIMIT=$'Permanent log limit'
+_A_JOURNAL_LIMIT_INFO=$'Writes the limit to a journald drop-in. Journald enforces it on its\nown until you change or remove it.'
+_A_JOURNAL_RESET_INFO=$'Removes the permanent limit. Journald returns to its defaults.'
 _A_PACCACHE=$'Pacman cache'
 _A_PACCACHE_INFO=$'Old package files in /var/cache/pacman/pkg. Rolling updates\nsometimes need a downgrade: keep at least 1-2 versions.'
 _A_PACCACHE_ALL=$'Removes every cached package file. No downgrade possible\nafterwards. pacman asks its own questions next.'
@@ -214,6 +220,19 @@ journal_bytes() {
     local v
     v=$(LC_ALL=C journalctl --disk-usage 2>/dev/null | sed -n 's/.*take up \([0-9.]*[KMGT]*\)B\? .*/\1/p')
     LC_ALL=C numfmt --from=iec "${v:-0}"
+}
+
+JOURNAL_DROPIN=/etc/systemd/journald.conf.d
+
+journal_conf() { # key: effective value from journald.conf and its drop-ins
+    systemd-analyze cat-config systemd/journald.conf 2>/dev/null | sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" | tail -n1 || true
+}
+
+journal_oldest_days() {
+    local t
+    t=$(journalctl -q -o short-unix 2>/dev/null | head -n1 | cut -d. -f1) || true
+    [[ $t =~ ^[0-9]+$ ]] && echo $(( ($(date +%s) - t) / 86400 ))
+    return 0
 }
 
 root_used() { df --output=used -B1 / | tail -n1 | tr -d ' '; }
@@ -331,15 +350,30 @@ stale_delete() {
 
 act_journal() {
     need journalctl
-    case $1 in
-        1d|7d) CMD=(sudo journalctl "--vacuum-time=$1") ;;
-        200M|500M) CMD=(sudo journalctl "--vacuum-size=$1") ;;
-        *) echo "unknown mode: $1"; exit 2 ;;
-    esac
+    local key val f
     TITLE="$_A_JOURNAL"
     INFO="$_A_JOURNAL_INFO"
     DRY=(journalctl --disk-usage)
     MEASURE_FN=journal_bytes
+    case $1 in
+        1d|7d) CMD=(sudo journalctl "--vacuum-time=$1") ;;
+        200M|500M) CMD=(sudo journalctl "--vacuum-size=$1") ;;
+        t3|t7|t30|s200|s500)
+            case $1 in
+                t*) key=MaxRetentionSec; val=${1#t}day; f=time ;;
+                s*) key=SystemMaxUse; val=${1#s}M; f=size ;;
+            esac
+            TITLE="$_A_JOURNAL_LIMIT"; INFO="$_A_JOURNAL_LIMIT_INFO"
+            DRY=(); MEASURE_FN=""
+            SHOW="$key=$val > $JOURNAL_DROPIN/90-mb-status-ce-$f.conf"
+            CMD=(sudo bash -c 'install -d "$1" && printf "[Journal]\n%s=%s\n" "$2" "$3" > "$1/90-mb-status-ce-$4.conf" && systemctl restart systemd-journald' _ "$JOURNAL_DROPIN" "$key" "$val" "$f") ;;
+        reset)
+            TITLE="$_A_JOURNAL_LIMIT"; INFO="$_A_JOURNAL_RESET_INFO"
+            DRY=(); MEASURE_FN=""
+            SHOW="rm $JOURNAL_DROPIN/90-mb-status-ce-*.conf"
+            CMD=(sudo bash -c 'rm -f "$1"/90-mb-status-ce-*.conf && systemctl restart systemd-journald' _ "$JOURNAL_DROPIN") ;;
+        *) echo "unknown mode: $1"; exit 2 ;;
+    esac
     flow
 }
 

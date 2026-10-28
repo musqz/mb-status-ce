@@ -131,6 +131,16 @@ _VACUUM_1DAY="Zachowaj z 1 dnia"
 _VACUUM_7DAYS="Zachowaj z 7 dni"
 _VACUUM_200M="Zachowaj 200M"
 _VACUUM_500M="Zachowaj 500M"
+_JOURNAL_NOW="Teraz"
+_JOURNAL_OLDEST="najstarszy wpis"
+_JOURNAL_LIMIT="limit"
+_JOURNAL_DEFAULT="domyślny"
+_LIMIT_3DAYS="Stały limit: 3 dni"
+_LIMIT_7DAYS="Stały limit: 7 dni"
+_LIMIT_30DAYS="Stały limit: 30 dni"
+_LIMIT_200M="Stały limit: 200M"
+_LIMIT_500M="Stały limit: 500M"
+_LIMIT_REMOVE="Usuń stały limit"
 
 _PACMAN_CACHE="Cache Pacmana"
 _EMPTY_PACMAN_CACHE="Wyczyść cache pacmana"
@@ -231,6 +241,16 @@ _VACUUM_1DAY="Keep 1 day"
 _VACUUM_7DAYS="Keep 7 days"
 _VACUUM_200M="Keep 200M"
 _VACUUM_500M="Keep 500M"
+_JOURNAL_NOW="Now"
+_JOURNAL_OLDEST="oldest entry"
+_JOURNAL_LIMIT="limit"
+_JOURNAL_DEFAULT="default"
+_LIMIT_3DAYS="Permanent limit: 3 days"
+_LIMIT_7DAYS="Permanent limit: 7 days"
+_LIMIT_30DAYS="Permanent limit: 30 days"
+_LIMIT_200M="Permanent limit: 200M"
+_LIMIT_500M="Permanent limit: 500M"
+_LIMIT_REMOVE="Remove permanent limit"
 
 _PACMAN_CACHE="Pacman cache"
 _EMPTY_PACMAN_CACHE="Clean pacman cache"
@@ -515,11 +535,22 @@ fi
         if ((!DYNAMIC || jb > 0)); then
             item "$_LOGS" "$(size_span "$jb")" journal
             sub journal "$_JOURNAL_LOGS"
+            local jt js jo jl
+            jt=$(journal_conf MaxRetentionSec); js=$(journal_conf SystemMaxUse); jo=$(journal_oldest_days)
+            jl=${jt:+$jt}${jt:+${js:+ / }}${js:+$js}
+            info "$_JOURNAL_NOW: $(human "$jb")${jo:+, $_JOURNAL_OLDEST: ${jo}d}, $_JOURNAL_LIMIT: ${jl:-$_JOURNAL_DEFAULT}"
             info "$_VACUUM_INFO1" "$_VACUUM_INFO2"
             opt "$_VACUUM_1DAY" "journalctl --vacuum-time=1d" journal 1d
             opt "$_VACUUM_7DAYS" "journalctl --vacuum-time=7d" journal 7d
             opt "$_VACUUM_200M" "journalctl --vacuum-size=200M" journal 200M
             opt "$_VACUUM_500M" "journalctl --vacuum-size=500M" journal 500M
+            out2+=("^sep()")
+            opt "$_LIMIT_3DAYS" "MaxRetentionSec" journal t3
+            opt "$_LIMIT_7DAYS" "MaxRetentionSec" journal t7
+            opt "$_LIMIT_30DAYS" "MaxRetentionSec" journal t30
+            opt "$_LIMIT_200M" "SystemMaxUse" journal s200
+            opt "$_LIMIT_500M" "SystemMaxUse" journal s500
+            compgen -G "$JOURNAL_DROPIN/90-mb-status-ce-*.conf" >/dev/null && opt "$_LIMIT_REMOVE" "journald.conf.d" journal reset
         fi
 
         if ((!DYNAMIC)) || has_files /var/cache/pacman/pkg; then
