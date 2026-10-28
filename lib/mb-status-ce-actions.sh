@@ -198,6 +198,18 @@ bytes_of() {
 
 human() { LC_ALL=C numfmt --to=iec "${1:-0}"; }
 
+# paccache_bytes <paccache flags>: bytes a prune would free, from the dry run summary; -1 when paccache is missing
+paccache_bytes() {
+    command -v paccache >/dev/null || { echo -1; return; }
+    LC_ALL=C paccache -d "$@" 2>/dev/null | awk '
+        /disk space saved:/ {
+            v = $(NF-1); u = $NF; sub(/\)/, "", u)
+            m = (u == "KiB") ? 1024 : (u == "MiB") ? 1048576 : (u == "GiB") ? 1073741824 : (u == "TiB") ? 1099511627776 : 1
+            n = int(v * m)
+        }
+        END { print n + 0 }'
+}
+
 journal_bytes() {
     local v
     v=$(LC_ALL=C journalctl --disk-usage 2>/dev/null | sed -n 's/.*take up \([0-9.]*[KMGT]*\)B\? .*/\1/p')

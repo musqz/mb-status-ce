@@ -163,6 +163,7 @@ _PACCACHE_INFO2="czasem wymagają downgrade'u."
 _KEEP_3_VERSIONS="Zachowaj 3 wersje"
 _KEEP_1_VERSION="Zachowaj 1 wersję"
 _UNINSTALLED_PKGS="Odinstalowane pakiety"
+_NOTHING_TO_PRUNE="Nic do usunięcia: zostaje tylko bieżące wydanie."
 _REMOVE_EVERYTHING="Usuń wszystko"
 _ORPHANS="Pakiety osierocone"
 _SIZE_INCL_DEPS="Rozmiar z nieużywanymi zależnościami (-Rs)"
@@ -262,6 +263,7 @@ _PACCACHE_INFO2="sometimes need a downgrade."
 _KEEP_3_VERSIONS="Keep 3 versions"
 _KEEP_1_VERSION="Keep 1 version"
 _UNINSTALLED_PKGS="Uninstalled packages"
+_NOTHING_TO_PRUNE="Nothing to prune: only current versions left."
 _REMOVE_EVERYTHING="Remove everything"
 _ORPHANS="Orphan packages"
 _SIZE_INCL_DEPS="Size incl. unused deps (-Rs)"
@@ -524,9 +526,14 @@ fi
             item "$_PACMAN_CACHE" "$(size_span "$pb")" paccache
             sub paccache "$_PACMAN_CACHE"
             info "$_PACCACHE_INFO1" "$_PACCACHE_INFO2"
-            opt "$_KEEP_3_VERSIONS" "paccache -rk3" paccache k3
-            opt "$_KEEP_1_VERSION" "paccache -rk1" paccache k1
-            opt "$_UNINSTALLED_PKGS" "paccache -ruk0" paccache uninstalled
+            local pk3 pk1 pun
+            pk3=$(paccache_bytes -k3)
+            pk1=$(paccache_bytes -k1)
+            pun=$(paccache_bytes -uk0)
+            ((!DYNAMIC || pk3 != 0)) && opt "$_KEEP_3_VERSIONS$( ((pk3 > 0)) && echo " ($(human "$pk3"))")" "paccache -rk3" paccache k3
+            ((!DYNAMIC || pk1 != 0)) && opt "$_KEEP_1_VERSION$( ((pk1 > 0)) && echo " ($(human "$pk1"))")" "paccache -rk1" paccache k1
+            ((!DYNAMIC || pun != 0)) && opt "$_UNINSTALLED_PKGS$( ((pun > 0)) && echo " ($(human "$pun"))")" "paccache -ruk0" paccache uninstalled
+            ((pk3 == 0 && pk1 == 0 && pun == 0)) && info "$_NOTHING_TO_PRUNE"
             bad "$_REMOVE_EVERYTHING" "pacman -Scc" paccache all
         fi
 
