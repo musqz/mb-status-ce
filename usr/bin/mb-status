@@ -83,11 +83,11 @@ left(){
     menu ipc
 }
 
-# size_span <bytes>: warn colour from 1G up, ok icon when (nearly) empty
+# size_span <bytes> [plain]: warn colour from 1G up, ok icon when (nearly) empty; "plain" skips the warn colour for rows with nothing to clean (AUR cache, VMs, pacman cache with under 1G to prune)
 size_span() {
     local h
     h=$(human "$1")
-    if [[ $h == *[GT] || $h == *[GT]i ]]; then
+    if [[ ${2:-} != plain && ( $h == *[GT] || $h == *[GT]i ) ]]; then
         echo "<span bgcolor='${WARN_BGCOLOR}' fgcolor='${WARN_FGCOLOR}'> ${h} </span>"
     elif [[ $h == *K || $h == 0 ]]; then
         echo "<span fgcolor='${OK_FGCOLOR}'>   </span>"
@@ -131,6 +131,15 @@ _VACUUM_1DAY="Zachowaj z 1 dnia"
 _VACUUM_7DAYS="Zachowaj z 7 dni"
 _VACUUM_200M="Zachowaj 200M"
 _VACUUM_500M="Zachowaj 500M"
+_JOURNAL_OLDEST="najstarszy wpis"
+_JOURNAL_LIMIT="limit"
+_JOURNAL_DEFAULT="domyślny"
+_LIMIT_3DAYS="Stały limit: 3 dni"
+_LIMIT_7DAYS="Stały limit: 7 dni"
+_LIMIT_30DAYS="Stały limit: 30 dni"
+_LIMIT_200M="Stały limit: 200M"
+_LIMIT_500M="Stały limit: 500M"
+_LIMIT_REMOVE="Usuń stały limit"
 
 _PACMAN_CACHE="Cache Pacmana"
 _EMPTY_PACMAN_CACHE="Wyczyść cache pacmana"
@@ -163,6 +172,7 @@ _PACCACHE_INFO2="czasem wymagają downgrade'u."
 _KEEP_3_VERSIONS="Zachowaj 3 wersje"
 _KEEP_1_VERSION="Zachowaj 1 wersję"
 _UNINSTALLED_PKGS="Odinstalowane pakiety"
+_NOTHING_TO_PRUNE="Nic do usunięcia: zostaje tylko bieżące wydanie."
 _REMOVE_EVERYTHING="Usuń wszystko"
 _ORPHANS="Pakiety osierocone"
 _SIZE_INCL_DEPS="Rozmiar z nieużywanymi zależnościami (-Rs)"
@@ -230,6 +240,15 @@ _VACUUM_1DAY="Keep 1 day"
 _VACUUM_7DAYS="Keep 7 days"
 _VACUUM_200M="Keep 200M"
 _VACUUM_500M="Keep 500M"
+_JOURNAL_OLDEST="oldest entry"
+_JOURNAL_LIMIT="limit"
+_JOURNAL_DEFAULT="default"
+_LIMIT_3DAYS="Permanent limit: 3 days"
+_LIMIT_7DAYS="Permanent limit: 7 days"
+_LIMIT_30DAYS="Permanent limit: 30 days"
+_LIMIT_200M="Permanent limit: 200M"
+_LIMIT_500M="Permanent limit: 500M"
+_LIMIT_REMOVE="Remove permanent limit"
 
 _PACMAN_CACHE="Pacman cache"
 _EMPTY_PACMAN_CACHE="Clean pacman cache"
@@ -262,6 +281,7 @@ _PACCACHE_INFO2="sometimes need a downgrade."
 _KEEP_3_VERSIONS="Keep 3 versions"
 _KEEP_1_VERSION="Keep 1 version"
 _UNINSTALLED_PKGS="Uninstalled packages"
+_NOTHING_TO_PRUNE="Nothing to prune: only current versions left."
 _REMOVE_EVERYTHING="Remove everything"
 _ORPHANS="Orphan packages"
 _SIZE_INCL_DEPS="Size incl. unused deps (-Rs)"
@@ -512,21 +532,37 @@ fi
         out+=("^sep($_DIR_SIZE_MONITOR)")
         if ((!DYNAMIC || jb > 0)); then
             item "$_LOGS" "$(size_span "$jb")" journal
-            sub journal "$_JOURNAL_LOGS"
-            info "$_VACUUM_INFO1" "$_VACUUM_INFO2"
+            local jt js jo jl
+            jt=$(journal_conf MaxRetentionSec); js=$(journal_conf SystemMaxUse); jo=$(journal_oldest_days)
+            jl=${jt:+$jt}${jt:+${js:+ / }}${js:+$js}
+            sub journal "$_JOURNAL_LOGS  <small>$(human "$jb")</small>"
+            info "${jo:+$_JOURNAL_OLDEST ${jo}d  ·  }$_JOURNAL_LIMIT ${jl:-$_JOURNAL_DEFAULT}" "$_VACUUM_INFO1" "$_VACUUM_INFO2"
             opt "$_VACUUM_1DAY" "journalctl --vacuum-time=1d" journal 1d
             opt "$_VACUUM_7DAYS" "journalctl --vacuum-time=7d" journal 7d
             opt "$_VACUUM_200M" "journalctl --vacuum-size=200M" journal 200M
             opt "$_VACUUM_500M" "journalctl --vacuum-size=500M" journal 500M
+            out2+=("^sep()")
+            opt "$([[ $jt == 3day ]] && echo "● ")$_LIMIT_3DAYS" "MaxRetentionSec" journal t3
+            opt "$([[ $jt == 7day ]] && echo "● ")$_LIMIT_7DAYS" "MaxRetentionSec" journal t7
+            opt "$([[ $jt == 30day ]] && echo "● ")$_LIMIT_30DAYS" "MaxRetentionSec" journal t30
+            opt "$([[ $js == 200M ]] && echo "● ")$_LIMIT_200M" "SystemMaxUse" journal s200
+            opt "$([[ $js == 500M ]] && echo "● ")$_LIMIT_500M" "SystemMaxUse" journal s500
+            compgen -G "$JOURNAL_DROPIN/90-mb-status-*.conf" >/dev/null && opt "$_LIMIT_REMOVE" "journald.conf.d" journal reset
         fi
 
         if ((!DYNAMIC)) || has_files /var/cache/pacman/pkg; then
-            item "$_PACMAN_CACHE" "$(size_span "$pb")" paccache
+            local pk3 pk1 pun pplain=""
+            pk3=$(paccache_bytes -k3)
+            pk1=$(paccache_bytes -k1)
+            pun=$(paccache_bytes -uk0)
+            ((pk3 < 1073741824 && pk1 < 1073741824 && pun < 1073741824)) && pplain=plain
+            item "$_PACMAN_CACHE" "$(size_span "$pb" $pplain)" paccache
             sub paccache "$_PACMAN_CACHE"
             info "$_PACCACHE_INFO1" "$_PACCACHE_INFO2"
-            opt "$_KEEP_3_VERSIONS" "paccache -rk3" paccache k3
-            opt "$_KEEP_1_VERSION" "paccache -rk1" paccache k1
-            opt "$_UNINSTALLED_PKGS" "paccache -ruk0" paccache uninstalled
+            ((!DYNAMIC || pk3 != 0)) && opt "$_KEEP_3_VERSIONS$( ((pk3 > 0)) && echo " ($(human "$pk3"))")" "paccache -rk3" paccache k3
+            ((!DYNAMIC || pk1 != 0)) && opt "$_KEEP_1_VERSION$( ((pk1 > 0)) && echo " ($(human "$pk1"))")" "paccache -rk1" paccache k1
+            ((!DYNAMIC || pun != 0)) && opt "$_UNINSTALLED_PKGS$( ((pun > 0)) && echo " ($(human "$pun"))")" "paccache -ruk0" paccache uninstalled
+            ((pk3 == 0 && pk1 == 0 && pun == 0)) && info "$_NOTHING_TO_PRUNE"
             bad "$_REMOVE_EVERYTHING" "pacman -Scc" paccache all
         fi
 
@@ -560,7 +596,7 @@ fi
         if ((${#aurs[@]})); then
             if ((!DYNAMIC)) || has_files "${aurdirs[@]}"; then
                 aurb=$(bytes_of "${aurdirs[@]}")
-                item "$_AUR_CACHE" "$(size_span "$aurb")" aur
+                item "$_AUR_CACHE" "$(size_span "$aurb" plain)" aur
                 sub aur "$_AUR_CACHE"
                 info "$_AUR_INFO"
                 hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
@@ -579,13 +615,6 @@ fi
             opt "$_OLD_THUMBS" "$_OLDER_THAN $(conf_days thumb_days 14) $_DAYS_AGO" thumbs
             opt "$_ALL_THUMBS ($(human "$thb"))" "find ... -delete" thumbs all
             opt "$_STALE_FILES" "$_UNTOUCHED $(conf_days cache_days 30) $_DAYS_AGO" cache
-        fi
-
-        if ((!DYNAMIC)) || [[ -n $(find "$CE_TRASH/files" "$CE_TRASH/expunged" -mindepth 1 -print -quit 2>/dev/null) ]]; then
-            item "$_TRASH" "$(size_span "$tb")" trash
-            sub trash "$_TRASH"
-            out2+=("$_OPEN $_TRASH,pcmanfm trash://")
-            bad "$_EMPTY $_TRASH" "find ... -delete" trash
         fi
 
         # tools whose cache dir holds data
@@ -616,19 +645,21 @@ fi
             done
         fi
 
-        local cont=()
+        local cont=() sz
         docker_prunable && cont+=(docker)
         flatpak_unused && cont+=(flatpak)
         snap_has_old && cont+=(snap)
         if ((${#cont[@]})); then
-            item "$_CONTAINERS" "" containers
+            sz=""
+            [[ " ${cont[*]} " == *" snap "* ]] && app_usable snap && sz=$(size_span "$(snap_old_bytes)")
+            item "$_CONTAINERS" "$sz" containers
             sub containers "$_CONTAINERS"
             info "$_CONT_INFO1" "$_CONT_INFO2"
             for t in "${cont[@]}"; do
                 case $t in
                     docker) opt "docker" "system prune" containers docker ;;
                     flatpak) opt "flatpak" "uninstall --unused" containers flatpak ;;
-                    snap) opt "snap" "$_REMOVE_OLD_REVS" containers snap ;;
+                    snap) opt "snap" "$_REMOVE_OLD_REVS$(app_usable snap && echo "  $(human "$(snap_old_bytes)")")" containers snap ;;
                 esac
             done
         fi
@@ -642,7 +673,7 @@ fi
                 vmtot=$((vmtot + vmb))
                 vml+=("$vmb $v")
             done
-            item "$_VMS" "$(size_span "$vmtot")" vm
+            item "$_VMS" "$(size_span "$vmtot" plain)" vm
             sub vm "$_VMS"
             info "$_VM_INFO"
             if ((${#vml[@]})); then
@@ -676,6 +707,13 @@ fi
                 opt "$_LIST_FILES" "pacdiff -o" leftover list
                 hash meld 2>/dev/null && opt "$_REVIEW_MERGE" "pacdiff + meld" leftover merge
             fi
+        fi
+
+        if ((!DYNAMIC)) || [[ -n $(find "$CE_TRASH/files" "$CE_TRASH/expunged" -mindepth 1 -print -quit 2>/dev/null) ]]; then
+            item "$_TRASH" "$(size_span "$tb")" trash
+            sub trash "$_TRASH"
+            out2+=("$_OPEN $_TRASH,pcmanfm trash://")
+            bad "$_EMPTY $_TRASH" "find ... -delete" trash
         fi
 
         # no cleanup row left: the header becomes a plain separator above Downloads
