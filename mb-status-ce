@@ -535,8 +535,8 @@ fi
             local jt js jo jl
             jt=$(journal_conf MaxRetentionSec); js=$(journal_conf SystemMaxUse); jo=$(journal_oldest_days)
             jl=${jt:+$jt}${jt:+${js:+ / }}${js:+$js}
-            sub journal "$_JOURNAL_LOGS  <small>$(human "$jb")${jo:+  ·  $_JOURNAL_OLDEST ${jo}d}  ·  $_JOURNAL_LIMIT ${jl:-$_JOURNAL_DEFAULT}</small>"
-            info "$_VACUUM_INFO1" "$_VACUUM_INFO2"
+            sub journal "$_JOURNAL_LOGS  <small>$(human "$jb")</small>"
+            info "${jo:+$_JOURNAL_OLDEST ${jo}d  ·  }$_JOURNAL_LIMIT ${jl:-$_JOURNAL_DEFAULT}" "$_VACUUM_INFO1" "$_VACUUM_INFO2"
             opt "$_VACUUM_1DAY" "journalctl --vacuum-time=1d" journal 1d
             opt "$_VACUUM_7DAYS" "journalctl --vacuum-time=7d" journal 7d
             opt "$_VACUUM_200M" "journalctl --vacuum-size=200M" journal 200M
