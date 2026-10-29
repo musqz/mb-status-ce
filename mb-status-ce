@@ -182,7 +182,8 @@ _REMOVE_WITH_DEPS="Usuń z nieużywanymi zależnościami"
 _BACKUP_THEN_REMOVE="Kopia konfiguracji, potem usuń"
 _REMOVE_DEPS_CONFIGS="Usuń z zależnościami i konfiguracją"
 _AUR_CACHE="Cache pomocnika AUR"
-_AUR_INFO="Pobrane źródła i pliki budowania."
+_AUR_INFO1="Pobrane źródła i pliki budowania."
+_AUR_INFO2="Budowane ponownie przy aktualizacji lub reinstalacji pakietu."
 _AUR_PICK="Wybierz pakiety do usunięcia"
 _THUMBS_CACHE="Miniatury / .cache"
 _CACHE_INFO1="Rozmiar dotyczy tylko starych plików."
@@ -291,7 +292,8 @@ _REMOVE_WITH_DEPS="Remove with unused deps"
 _BACKUP_THEN_REMOVE="Back up configs then remove"
 _REMOVE_DEPS_CONFIGS="Remove with deps and configs"
 _AUR_CACHE="AUR helper cache"
-_AUR_INFO="Downloaded sources and build files."
+_AUR_INFO1="Downloaded sources and build files."
+_AUR_INFO2="Rebuilt when a package is updated or reinstalled."
 _AUR_PICK="Choose packages to remove"
 _THUMBS_CACHE="Thumbnails / .cache"
 _CACHE_INFO1="Size shown = stale files only."
@@ -598,7 +600,7 @@ fi
                 aurb=$(bytes_of "${aurdirs[@]}")
                 item "$_AUR_CACHE" "$(size_span "$aurb" plain)" aur
                 sub aur "$_AUR_CACHE"
-                info "$_AUR_INFO"
+                info "$_AUR_INFO1" "$_AUR_INFO2"
                 hash paru 2>/dev/null && opt "paru" "paru -Sc --aur" aur paru
                 hash yay 2>/dev/null && opt "yay" "yay -Sc --aur" aur yay
                 hash pamac 2>/dev/null && opt "pamac" "pamac clean -b" aur pamac
