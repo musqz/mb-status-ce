@@ -2,12 +2,15 @@
 
 ## Unreleased
 
+## v1.1.5 - 2026-10-29
+
 - Show the size of old snap revisions in the menu and terminal.
 - Show the old snap revisions size on the Containers row.
 - Move the Trash row above Downloads.
 - Show the reclaimable size per pacman cache option.
 - Show the journal state and set a permanent journald limit.
 - Show the journal limit in the title and mark the active permanent limit.
+- Move the journal age and limit from the submenu title to an info line.
 - Flag the pacman cache red only when 1G or more can be pruned.
 - Don't flag the AUR cache and VM rows red.
 
